@@ -229,6 +229,7 @@ socket.on('connect',function(){
     if(chance === myid){    
         document.querySelector('#randomButt').addEventListener('click',function(event){
         event.preventDefault();
+        if(this.classList.contains('disabled')) return;
         console.log('19/6/21 randomButt clicked');
         styleButton(0);
         diceAction();
@@ -360,23 +361,30 @@ function outputMessage(anObject,k){
 function styleButton(k){
     let butt = document.getElementById("randomButt")
     if(k===0){
-        butt.disabled = true;
-        butt.style.opacity =  0.6;
-        butt.style.cursor = "not-allowed"
-        butt.style.backgroundImage = "linear-gradient(to bottom right, red, yellow)"
+        butt.classList.add('disabled');
+        butt.classList.remove('active');
     }
     else if(k===1){
-        butt.disabled = false;
-        butt.style.opacity = 1;
-        butt.style.cursor = "pointer";
-        butt.style.backgroundImage = "linear-gradient(to bottom right, red, yellow)"
+        butt.classList.remove('disabled');
+        butt.classList.add('active');
     }
+}
+
+// Update dice face
+function updateDice(num){
+    let dice = document.getElementById("randomButt");
+    dice.classList.add('rolling');
+    setTimeout(()=>{
+        dice.setAttribute('data-num', num);
+        dice.classList.remove('rolling');
+    }, 500);
 }
 
 //simulates the action of dice and also chance rotation.
 function diceAction(){
     socket.emit('roll-dice',{room:room_code,id:myid},function(num){
         console.log('19/6/21 dice rolled, got',num);
+        updateDice(num);
         let spirit = [];
         for(let i=0;i<4;i++){
             if(PLAYERS[myid].myPieces[i].pos>-1 && PLAYERS[myid].myPieces[i].pos + num <= 56){
