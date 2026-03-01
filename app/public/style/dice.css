@@ -1,0 +1,113 @@
+/* Corner Dice - small version */
+.corner-dice {
+    width: 44px;
+    height: 44px;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #333;
+    display: grid;
+    grid-template-areas:
+        "a . c"
+        "e g f"
+        "d . b";
+    padding: 5px;
+    gap: 3px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: transform 0.1s;
+    position: relative;
+}
+
+.corner-dice:active {
+    transform: scale(0.93);
+}
+
+.corner-dice.rolling {
+    animation: roll 0.5s ease-in-out;
+}
+
+@keyframes roll {
+    0%   { transform: rotate(0deg) scale(1); }
+    25%  { transform: rotate(90deg) scale(0.9); }
+    50%  { transform: rotate(180deg) scale(1.1); }
+    75%  { transform: rotate(270deg) scale(0.9); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.dot {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #222;
+    display: none;
+}
+
+.dot.a { grid-area: a; }
+.dot.b { grid-area: b; }
+.dot.c { grid-area: c; }
+.dot.d { grid-area: d; }
+.dot.e { grid-area: e; }
+.dot.f { grid-area: f; }
+.dot.g { grid-area: g; }
+
+/* Dice Faces */
+.corner-dice[data-num="1"] .dot.g { display: block; }
+
+.corner-dice[data-num="2"] .dot.a { display: block; }
+.corner-dice[data-num="2"] .dot.b { display: block; }
+
+.corner-dice[data-num="3"] .dot.a { display: block; }
+.corner-dice[data-num="3"] .dot.g { display: block; }
+.corner-dice[data-num="3"] .dot.b { display: block; }
+
+.corner-dice[data-num="4"] .dot.a { display: block; }
+.corner-dice[data-num="4"] .dot.c { display: block; }
+.corner-dice[data-num="4"] .dot.d { display: block; }
+.corner-dice[data-num="4"] .dot.b { display: block; }
+
+.corner-dice[data-num="5"] .dot.a { display: block; }
+.corner-dice[data-num="5"] .dot.c { display: block; }
+.corner-dice[data-num="5"] .dot.g { display: block; }
+.corner-dice[data-num="5"] .dot.d { display: block; }
+.corner-dice[data-num="5"] .dot.b { display: block; }
+
+.corner-dice[data-num="6"] .dot.a { display: block; }
+.corner-dice[data-num="6"] .dot.c { display: block; }
+.corner-dice[data-num="6"] .dot.e { display: block; }
+.corner-dice[data-num="6"] .dot.f { display: block; }
+.corner-dice[data-num="6"] .dot.d { display: block; }
+.corner-dice[data-num="6"] .dot.b { display: block; }
+
+/* States */
+.corner-dice.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(60%);
+}
+
+.corner-dice.active {
+    cursor: pointer;
+    box-shadow: 0 0 14px 4px rgba(255,255,255,0.6);
+    animation: pulse-dice 1.2s infinite alternate;
+}
+
+@keyframes pulse-dice {
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
+}
+
+/* Bigger on desktop */
+@media (min-width: 769px) {
+    .corner-dice {
+        width: 65px;
+        height: 65px;
+        border-radius: 12px;
+        padding: 8px;
+        gap: 4px;
+    }
+}
+
+/* Hidden original dice - keep for JS compat */
+#randomButt {
+    display: none !important;
+}
