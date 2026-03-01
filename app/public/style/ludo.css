@@ -1,0 +1,296 @@
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #1a1a2e;
+    font-family: "Audiowide", sans-serif;
+}
+
+.navBar {
+    background-color: #16213e;
+    overflow: hidden;
+    border-radius: 3px;
+    height: 42px;
+    border-bottom: 2px solid #0f3460;
+}
+
+.navBar a {
+    float: left;
+    color: #e2e2e2;
+    text-align: center;
+    padding: 10px 14px;
+    text-decoration: none;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+.navBar a:hover {
+    background-color: #0f3460;
+    color: white;
+}
+
+#my-name {
+    position: absolute;
+    right: 2px;
+    color: #f2f2f2;
+    padding: 8px 14px;
+    font-size: 14px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.copy-wrapper .copy-content {
+    display: none;
+    position: absolute;
+    right: 25px;
+    top: 50px;
+    z-index: 10;
+    border-radius: 8px;
+    padding: 10px 15px;
+    background: #16213e;
+    color: white;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+}
+
+.copy-wrapper {
+    float: left;
+    overflow: hidden;
+}
+
+.copy-wrapper:hover .copy-content {
+    display: block;
+}
+
+.copy-content #copy {
+    resize: none;
+    border: 2px dotted #0f3460;
+    border-radius: 7px;
+    margin-bottom: 8px;
+    background: #0f3460;
+    color: white;
+    font-size: 13px;
+}
+
+.tooltip { position: relative; display: inline-block; }
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 140px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    margin-left: -75px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+}
+.tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+    background: #16213e;
+    color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border: 2px solid #0f3460;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 360px;
+    text-align: center;
+}
+
+#HOME, #RESUME, #WAIT {
+    background: linear-gradient(135deg, #e94560, #0f3460);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 6px;
+}
+
+#copy-btn {
+    background: #0f3460;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 4px;
+}
+
+/* MAIN WRAPPER */
+.gameWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: calc(100vh - 42px);
+    padding: 4px;
+    gap: 4px;
+    overflow: hidden;
+}
+
+/* CORNER ROWS */
+.corners-row {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 500px;
+    gap: 4px;
+    justify-content: space-between;
+}
+
+/* CORNER BOX */
+.corner-box {
+    flex: 1;
+    border-radius: 10px;
+    padding: 5px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 80px;
+    border: 2px solid transparent;
+    transition: all 0.4s ease;
+    opacity: 0.45;
+    cursor: default;
+}
+
+.corner-green  { background: rgba(0,160,70,0.12);  border-color: rgba(0,160,70,0.25); }
+.corner-red    { background: rgba(220,30,30,0.12);  border-color: rgba(220,30,30,0.25); }
+.corner-yellow { background: rgba(220,180,0,0.12);  border-color: rgba(220,180,0,0.25); }
+.corner-blue   { background: rgba(30,80,220,0.12);  border-color: rgba(30,80,220,0.25); }
+
+/* Whose turn it is - GLOW */
+.corner-green.my-turn  { opacity:1; box-shadow: 0 0 20px 5px #00c853; border-color: #00c853; transform: scale(1.03); }
+.corner-red.my-turn    { opacity:1; box-shadow: 0 0 20px 5px #ff1744; border-color: #ff1744; transform: scale(1.03); }
+.corner-yellow.my-turn { opacity:1; box-shadow: 0 0 20px 5px #ffd600; border-color: #ffd600; transform: scale(1.03); }
+.corner-blue.my-turn   { opacity:1; box-shadow: 0 0 20px 5px #2979ff; border-color: #2979ff; transform: scale(1.03); }
+
+.player-label {
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.green-label  { color: #00c853; }
+.red-label    { color: #ff1744; }
+.yellow-label { color: #ffd600; }
+.blue-label   { color: #2979ff; }
+
+.dice-corner-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.corner-msg {
+    font-size: 8px;
+    color: #aaa;
+    text-align: center;
+    min-height: 11px;
+    font-family: sans-serif;
+}
+
+/* BOARD */
+.gameBoard {
+    position: relative;
+    flex: 0 0 auto;
+    width: calc(100vw - 8px);
+    max-width: 480px;
+    aspect-ratio: 1/1;
+}
+
+.ludoImg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0; left: 0;
+    z-index: 0;
+}
+
+.gameCanvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0; left: 0;
+    z-index: 1;
+    border: 2px solid #333;
+}
+
+/* MSG BOARD */
+.msgBoard {
+    width: 100%;
+    max-width: 500px;
+    flex: 1;
+    min-height: 36px;
+    max-height: 75px;
+    border-radius: 8px;
+    padding: 5px 10px;
+    background: rgba(15,52,96,0.4);
+    border: 1px solid #0f3460;
+    overflow-y: auto;
+    font-family: sans-serif;
+    font-size: 11px;
+}
+
+.message, .messageFromServer {
+    color: #ddd;
+    text-align: center;
+    padding: 1px 0;
+}
+
+#color-message-span1, #theOneWhoLeft {
+    font-family: 'ZCOOL KuaiLe', cursive;
+}
+
+#color-message-span2 {
+    font-family: 'Roboto Slab', serif;
+}
+
+/* DESKTOP */
+@media (min-width: 769px) {
+    html, body { overflow: auto; }
+    .gameWrapper {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+        height: auto;
+        padding: 20px;
+        gap: 16px;
+    }
+    .corners-row {
+        flex-direction: column;
+        width: auto;
+        gap: 12px;
+    }
+    .corner-box {
+        min-width: 140px;
+        min-height: 130px;
+    }
+    .player-label { font-size: 12px; }
+    .corner-msg { font-size: 10px; }
+    .gameBoard { width: 500px; max-width: 500px; }
+    .msgBoard { width: 100%; max-width: 800px; max-height: 120px; }
+}
