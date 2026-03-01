@@ -1,0 +1,101 @@
+/* Dice Styles */
+.dice-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 15px auto;
+}
+
+.dice {
+    width: 70px;
+    height: 70px;
+    background: white;
+    border-radius: 12px;
+    border: 3px solid #333;
+    display: grid;
+    grid-template-areas:
+        "a . c"
+        "e g f"
+        "d . b";
+    padding: 8px;
+    gap: 4px;
+    cursor: pointer;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    transition: transform 0.1s;
+    position: relative;
+}
+
+.dice:active {
+    transform: scale(0.95);
+}
+
+.dice.rolling {
+    animation: roll 0.5s ease-in-out;
+}
+
+@keyframes roll {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(0.9); }
+    50% { transform: rotate(180deg) scale(1.1); }
+    75% { transform: rotate(270deg) scale(0.9); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.dot {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #222;
+    display: none;
+}
+
+.dot.a { grid-area: a; }
+.dot.b { grid-area: b; }
+.dot.c { grid-area: c; }
+.dot.d { grid-area: d; }
+.dot.e { grid-area: e; }
+.dot.f { grid-area: f; }
+.dot.g { grid-area: g; }
+
+/* Dice face 1 */
+.dice[data-num="1"] .dot.g { display: block; }
+
+/* Dice face 2 */
+.dice[data-num="2"] .dot.a { display: block; }
+.dice[data-num="2"] .dot.b { display: block; }
+
+/* Dice face 3 */
+.dice[data-num="3"] .dot.a { display: block; }
+.dice[data-num="3"] .dot.g { display: block; }
+.dice[data-num="3"] .dot.b { display: block; }
+
+/* Dice face 4 */
+.dice[data-num="4"] .dot.a { display: block; }
+.dice[data-num="4"] .dot.c { display: block; }
+.dice[data-num="4"] .dot.d { display: block; }
+.dice[data-num="4"] .dot.b { display: block; }
+
+/* Dice face 5 */
+.dice[data-num="5"] .dot.a { display: block; }
+.dice[data-num="5"] .dot.c { display: block; }
+.dice[data-num="5"] .dot.g { display: block; }
+.dice[data-num="5"] .dot.d { display: block; }
+.dice[data-num="5"] .dot.b { display: block; }
+
+/* Dice face 6 */
+.dice[data-num="6"] .dot.a { display: block; }
+.dice[data-num="6"] .dot.c { display: block; }
+.dice[data-num="6"] .dot.e { display: block; }
+.dice[data-num="6"] .dot.f { display: block; }
+.dice[data-num="6"] .dot.d { display: block; }
+.dice[data-num="6"] .dot.b { display: block; }
+
+.dice.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dice.active {
+    border-color: #4caf50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+}
