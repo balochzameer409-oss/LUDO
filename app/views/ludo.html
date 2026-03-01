@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../style/ludo.css">
+    <link rel="stylesheet" href="../style/dice.css">
     <script src='../../socket.io/socket.io.js'></script>
     <link rel="apple-touch-icon" sizes="180x180" href="../images/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon/favicon-32x32.png">
@@ -78,8 +79,16 @@
                 </div>
             
             </div>
-            <div class="goButt">
-                <button id="randomButt" style="text-align: right;">GO</button>
+            <div class="dice-container">
+                <div class="dice disabled" id="randomButt" data-num="6">
+                    <span class="dot a"></span>
+                    <span class="dot b"></span>
+                    <span class="dot c"></span>
+                    <span class="dot d"></span>
+                    <span class="dot e"></span>
+                    <span class="dot f"></span>
+                    <span class="dot g"></span>
+                </div>
             </div>
         </div>
     </div>
