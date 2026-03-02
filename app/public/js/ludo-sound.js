@@ -139,3 +139,10 @@ const LudoSound = (() => {
     // Public API
     return { dice, move, kill, win, six };
 })();
+
+// ── Mobile پر AudioContext unlock ──
+// پہلی touch پر unlock کرنا ضروری ہے
+LudoSound.unlock = function(){
+    let ac = getCtx();
+    if(ac.state === 'suspended') ac.resume();
+};
