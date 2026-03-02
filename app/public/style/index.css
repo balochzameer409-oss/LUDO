@@ -356,3 +356,19 @@ html, body {
     .hero-desc { font-size: 16px; }
     .float-dice { opacity: 0.1; }
 }
+/* ── TWO MODE BUTTONS ── */
+.mode-btns-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: center;
+}
+
+.online-btn {
+    background: linear-gradient(135deg, #00c853, #0097a7);
+}
+
+.offline-btn {
+    background: linear-gradient(135deg, #ff6f00, #e53935);
+    box-shadow: 0 8px 28px rgba(255,111,0,0.4);
+}
