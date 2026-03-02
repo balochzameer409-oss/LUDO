@@ -17,19 +17,6 @@
     <meta name="theme-color" content="000000">
 
     <style>
-        /* Offline pass-screen overlay */
-        #pass-screen {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 999;
-            background: rgba(0,0,0,0.92);
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            text-align: center;
-            padding: 30px;
-        }
         #pass-screen.show { display: flex; }
         #pass-screen .pass-icon { font-size: 80px; margin-bottom: 16px; animation: popIn 0.4s ease; }
         #pass-screen .pass-title {
@@ -132,15 +119,6 @@
             <button class="player-count-btn" onclick="startOffline(3)">3<span>کھلاڑی</span></button>
             <button class="player-count-btn" onclick="startOffline(4)">4<span>کھلاڑی</span></button>
         </div>
-    </div>
-
-    <!-- Pass Screen -->
-    <div id="pass-screen">
-        <div class="pass-icon" id="pass-icon">📱</div>
-        <div class="pass-title">موبائل پاس کریں!</div>
-        <div class="pass-name" id="pass-name">GREEN</div>
-        <div class="pass-sub" id="pass-sub">آپ کی باری ہے — تیار ہوں تو دبائیں</div>
-        <button class="pass-btn" id="pass-btn" onclick="hidePasScreen()">✅ میں تیار ہوں</button>
     </div>
 
     <!-- Win Modal -->
