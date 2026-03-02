@@ -6,10 +6,9 @@ const USERNAMES = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
 const COLORS    = ['green', 'red', 'blue', 'yellow'];
 const COLOR_HEX = ['#27ae60', '#e74c3c', '#2980b9', '#f1c40f'];
 const PIECES    = [];
-
 const PASS_ICONS = ['🟢','🔴','🔵','🟡'];
 
-let MYROOM   = [];   // active players e.g. [0,1,2,3]
+let MYROOM   = [];
 let chance   = 0;
 let PLAYERS  = {};
 let waitingForPieceClick = false;
@@ -20,10 +19,22 @@ var ctx    = canvas.getContext('2d');
 canvas.height = 750;
 canvas.width  = 750;
 
+// ── FIX 1: Touch کو صحیح canvas coordinates میں بدلو ──
 canvas.addEventListener('touchstart', function(e){
     e.preventDefault();
     let touch = e.touches[0];
-    canvas.dispatchEvent(new MouseEvent('click', { clientX: touch.clientX, clientY: touch.clientY }));
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width  / rect.width;
+    let scaleY = canvas.height / rect.height;
+    let x = (touch.clientX - rect.left) * scaleX;
+    let y = (touch.clientY - rect.top)  * scaleY;
+    // fake click event with already-scaled coordinates
+    canvas._touchX = x;
+    canvas._touchY = y;
+    canvas.dispatchEvent(new MouseEvent('click', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    }));
 }, {passive: false});
 
 let allPiecesePos = {
@@ -40,8 +51,6 @@ let homeTilePos = {
     3:{0:{x:300,y:650},1:{x:100,y:400}}
 };
 
-// ── Player & Piece classes (same as online) ──
-
 class Player {
     constructor(id){
         this.id = String(id);
@@ -49,9 +58,7 @@ class Player {
         for(let i=0;i<4;i++) this.myPieces[i] = new Piece(String(i), String(id));
         this.won = 0;
     }
-    draw(){
-        for(let i=0;i<4;i++) this.myPieces[i].draw();
-    }
+    draw(){ for(let i=0;i<4;i++) this.myPieces[i].draw(); }
     didIwin(){ return this.won == 4 ? 1 : 0; }
 }
 
@@ -144,9 +151,7 @@ class Piece {
         }
     }
 
-    draw(){
-        ctx.drawImage(this.image, this.x, this.y, 50, 50);
-    }
+    draw(){ ctx.drawImage(this.image, this.x, this.y, 50, 50); }
 
     update(num){
         if(this.pos != -1 && this.pos + num <= 56){
@@ -160,9 +165,9 @@ class Piece {
         }
     }
 
-    oneStepToRight(id,pid){ window.PLAYERS[id].myPieces[pid].x += 50; }
-    oneStepToLeft(id,pid) { window.PLAYERS[id].myPieces[pid].x -= 50; }
-    oneStepToTop(id,pid)  { window.PLAYERS[id].myPieces[pid].y -= 50; }
+    oneStepToRight(id,pid) { window.PLAYERS[id].myPieces[pid].x += 50; }
+    oneStepToLeft(id,pid)  { window.PLAYERS[id].myPieces[pid].x -= 50; }
+    oneStepToTop(id,pid)   { window.PLAYERS[id].myPieces[pid].y -= 50; }
     oneStepToBottom(id,pid){ window.PLAYERS[id].myPieces[pid].y += 50; }
     oneStepTowards45(id,pid) { window.PLAYERS[id].myPieces[pid].x += 50; window.PLAYERS[id].myPieces[pid].y -= 50; }
     oneStepTowards135(id,pid){ window.PLAYERS[id].myPieces[pid].x -= 50; window.PLAYERS[id].myPieces[pid].y -= 50; }
@@ -176,11 +181,10 @@ class Piece {
     }
 }
 
-// ── Game init from player select ──
+// ── Game init ──
 
 function startOffline(numPlayers){
     totalPlayers = numPlayers;
-    // Use first N players: 0=green,1=red,2=blue,3=yellow
     MYROOM = [];
     for(let i=0;i<numPlayers;i++) MYROOM.push(i);
     document.getElementById('player-select-modal').style.display = 'none';
@@ -199,13 +203,14 @@ function loadAllPieces(){
                 chance = MYROOM[0];
                 allPlayerHandler();
                 activateChance(chance);
-                // Wire corner dice
                 for(let i=0;i<4;i++){
                     let cd = document.getElementById('dice-' + i);
                     if(cd){
                         cd.addEventListener('click', function(){
                             if(this.classList.contains('disabled')) return;
                             if(Number(this.dataset.pid) !== chance) return;
+                            // ── FIX 3: آواز کے لیے AudioContext unlock ──
+                            if(window.LudoSound) LudoSound.unlock();
                             offlineDiceAction();
                         });
                         cd.dataset.pid = i;
@@ -220,9 +225,7 @@ function loadAllPieces(){
 
 // ── Dice ──
 
-function rollDice(){
-    return Math.floor(Math.random() * 6) + 1;
-}
+function rollDice(){ return Math.floor(Math.random() * 6) + 1; }
 
 function offlineDiceAction(){
     if(waitingForPieceClick) return;
@@ -239,7 +242,6 @@ function offlineDiceAction(){
     }
 
     if(spirit.length === 0){
-        // no move possible
         outputMessage('کوئی گوٹی نہیں چل سکتی!', 'server');
         setTimeout(() => nextTurn(num), 800);
         return;
@@ -248,63 +250,77 @@ function offlineDiceAction(){
     waitingForPieceClick = true;
     outputMessage('گوٹی کو چھوئیں', 'server');
 
-    canvas.addEventListener('click', function clickHandler(e){
-        let rect = e.target.getBoundingClientRect();
-        let scaleX = canvas.width  / rect.width;
-        let scaleY = canvas.height / rect.height;
-        let Xp = (e.clientX - rect.left) * scaleX;
-        let Yp = (e.clientY - rect.top)  * scaleY;
-
-        for(let i=0;i<4;i++){
-            let px = PLAYERS[chance].myPieces[i].x;
-            let py = PLAYERS[chance].myPieces[i].y;
-            if(Xp-px<50 && Xp-px>0 && Yp-py<50 && Yp-py>0){
-                let piece = PLAYERS[chance].myPieces[i];
-                let canMove = spirit.includes(i) && (
-                    (piece.pos === -1 && num === 6) ||
-                    (piece.pos > -1 && piece.pos + num <= 56)
-                );
-                if(canMove){
-                    PLAYERS[chance].myPieces[i].update(num);
-                    if(window.LudoSound) LudoSound.move();
-                    iKill(chance, i);
-                    allPlayerHandler();
-                    canvas.removeEventListener('click', clickHandler);
-                    waitingForPieceClick = false;
-                    // check win
-                    if(PLAYERS[chance].didIwin()){
-                        showWin(chance);
-                        return;
-                    }
-                    setTimeout(() => nextTurn(num), 400);
-                    return;
-                } else {
-                    outputMessage('یہ گوٹی نہیں چل سکتی!', 'server');
-                    return;
-                }
-            }
-        }
-        outputMessage('اپنے رنگ کی گوٹی کو چھوئیں', 'server');
-    });
+    // ── FIX 1: ہر بار نیا listener — پرانا ہٹاؤ ──
+    canvas.removeEventListener('click', pieceClickHandler);
+    canvas._pendingNum = num;
+    canvas._pendingSpirit = spirit;
+    canvas.addEventListener('click', pieceClickHandler);
 }
 
-// ── Turn management ──
+function pieceClickHandler(e){
+    let num    = canvas._pendingNum;
+    let spirit = canvas._pendingSpirit;
+
+    // ── FIX 2: touch کے لیے pre-scaled coordinates استعمال کرو ──
+    let Xp, Yp;
+    if(canvas._touchX !== undefined){
+        Xp = canvas._touchX;
+        Yp = canvas._touchY;
+        canvas._touchX = undefined;
+        canvas._touchY = undefined;
+    } else {
+        let rect = canvas.getBoundingClientRect();
+        let scaleX = canvas.width  / rect.width;
+        let scaleY = canvas.height / rect.height;
+        Xp = (e.clientX - rect.left) * scaleX;
+        Yp = (e.clientY - rect.top)  * scaleY;
+    }
+
+    for(let i=0;i<4;i++){
+        let px = PLAYERS[chance].myPieces[i].x;
+        let py = PLAYERS[chance].myPieces[i].y;
+        if(Xp >= px && Xp <= px+50 && Yp >= py && Yp <= py+50){
+            let piece = PLAYERS[chance].myPieces[i];
+            let canMove = spirit.includes(i) && (
+                (piece.pos === -1 && num === 6) ||
+                (piece.pos > -1 && piece.pos + num <= 56)
+            );
+            if(canMove){
+                PLAYERS[chance].myPieces[i].update(num);
+                if(window.LudoSound) LudoSound.move();
+                iKill(chance, i);
+                allPlayerHandler();
+                canvas.removeEventListener('click', pieceClickHandler);
+                waitingForPieceClick = false;
+                if(PLAYERS[chance].didIwin()){
+                    showWin(chance);
+                    return;
+                }
+                setTimeout(() => nextTurn(num), 400);
+                return;
+            } else {
+                outputMessage('یہ گوٹی نہیں چل سکتی!', 'server');
+                return;
+            }
+        }
+    }
+    outputMessage('اپنے رنگ کی گوٹی کو چھوئیں', 'server');
+}
+
+// ── FIX 2: Pass screen ہٹاؤ — خود بخود باری بدلے ──
 
 function nextTurn(lastNum){
     deactivateAll();
-    let nextId;
     if(lastNum === 6){
-        // چھکا — دوبارہ اسی کی باری
-        nextId = chance;
         if(window.LudoSound) LudoSound.six();
-        outputMessage(USERNAMES[nextId] + ' کو چھکا ملا — دوبارہ باری! 🎉', 'server');
-        activateChance(nextId);
+        outputMessage(USERNAMES[chance] + ' کو چھکا — دوبارہ باری! 🎉', 'server');
+        activateChance(chance);
     } else {
         let idx = MYROOM.indexOf(chance);
-        nextId = MYROOM[(idx + 1) % MYROOM.length];
+        let nextId = MYROOM[(idx + 1) % MYROOM.length];
         chance = nextId;
-        // Pass screen دکھاؤ
-        showPassScreen(nextId);
+        activateChance(nextId);
+        outputMessage('👉 ' + USERNAMES[nextId] + ' کی باری!', nextId);
     }
 }
 
@@ -330,42 +346,18 @@ function deactivateAll(){
     }
 }
 
-// ── Pass Screen ──
-
-function showPassScreen(nextId){
-    let screen = document.getElementById('pass-screen');
-    let nameEl = document.getElementById('pass-name');
-    let iconEl = document.getElementById('pass-icon');
-    let btn    = document.getElementById('pass-btn');
-
-    nameEl.textContent  = USERNAMES[nextId];
-    nameEl.style.color  = COLOR_HEX[nextId];
-    iconEl.textContent  = PASS_ICONS[nextId];
-    btn.style.background = COLOR_HEX[nextId];
-    btn.style.color = '#fff';
-
-    screen.classList.add('show');
-}
-
-function hidePasScreen(){
-    document.getElementById('pass-screen').classList.remove('show');
-    activateChance(chance);
-    outputMessage(USERNAMES[chance] + ' کی باری ہے!', chance);
-}
-
 // ── Win ──
 
 function showWin(id){
-    if(window.LudoSound) LudoSound.win();
     deactivateAll();
+    if(window.LudoSound) LudoSound.win();
     let modal = document.getElementById('win-modal');
-    document.getElementById('win-text').innerHTML =
-        PASS_ICONS[id] + ' ' + USERNAMES[id] + ' جیت گیا! 🏆';
+    document.getElementById('win-text').innerHTML = PASS_ICONS[id] + ' ' + USERNAMES[id] + ' جیت گیا! 🏆';
     document.getElementById('win-text').style.color = COLOR_HEX[id];
     modal.style.display = 'block';
 }
 
-// ── Kill logic ──
+// ── Kill ──
 
 function iKill(id, pid){
     let boss = PLAYERS[id].myPieces[pid];
@@ -375,7 +367,7 @@ function iKill(id, pid){
                 if(!inAhomeTile(id,pid)){
                     PLAYERS[MYROOM[i]].myPieces[j].kill();
                     if(window.LudoSound) LudoSound.kill();
-                    outputMessage('💀 ' + USERNAMES[id] + ' نے ' + USERNAMES[MYROOM[i]] + ' کی گوٹی مار دی!', 'server');
+                    outputMessage('💀 ' + USERNAMES[id] + ' نے ' + USERNAMES[MYROOM[i]] + ' کی گوٹی ماری!', 'server');
                     return 1;
                 }
             }
@@ -394,14 +386,10 @@ function inAhomeTile(id, pid){
     return false;
 }
 
-// ── Draw all players ──
-
 function allPlayerHandler(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for(let i=0;i<MYROOM.length;i++) PLAYERS[MYROOM[i]].draw();
 }
-
-// ── UI helpers ──
 
 function updateDiceUI(id, num){
     let d = document.getElementById('dice-' + id);
@@ -409,8 +397,10 @@ function updateDiceUI(id, num){
         d.classList.add('rolling');
         setTimeout(()=>{ d.setAttribute('data-num', num); d.classList.remove('rolling'); }, 500);
     }
-    let m = document.getElementById('cmsg-' + id);
-    if(m) setTimeout(()=>{ m.textContent = '🎲 ' + num + ' آیا!'; }, 500);
+    setTimeout(()=>{
+        let m = document.getElementById('cmsg-' + id);
+        if(m) m.textContent = '🎲 ' + num + ' آیا!';
+    }, 500);
 }
 
 function outputMessage(msg, who){
@@ -418,7 +408,7 @@ function outputMessage(msg, who){
     let div = document.createElement('div');
     div.classList.add(who === 'server' ? 'messageFromServer' : 'message');
     let color = (typeof who === 'number') ? COLOR_HEX[who] : '#aaa';
-    div.innerHTML = `<p style="text-shadow: 0 0 6px ${color}">${msg}</p>`;
+    div.innerHTML = '<p style="text-shadow: 0 0 6px ' + color + '">' + msg + '</p>';
     board.appendChild(div);
     board.scrollTop = board.scrollHeight;
 }
