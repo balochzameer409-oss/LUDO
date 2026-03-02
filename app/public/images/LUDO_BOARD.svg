@@ -1,0 +1,244 @@
+<svg width="750" height="750" viewBox="0 0 750 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="boardBg" x1="0" y1="0" x2="750" y2="750" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0d1b2a"/>
+      <stop offset="50%" stop-color="#1b2a3b"/>
+      <stop offset="100%" stop-color="#0d1b2a"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0" y1="0" x2="750" y2="750" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#FFA500"/>
+      <stop offset="100%" stop-color="#FFD700"/>
+    </linearGradient>
+    <radialGradient id="greenHomeGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#69f0ae"/>
+      <stop offset="55%" stop-color="#00c853"/>
+      <stop offset="100%" stop-color="#1b5e20"/>
+    </radialGradient>
+    <radialGradient id="redHomeGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#ff8a80"/>
+      <stop offset="55%" stop-color="#ff1744"/>
+      <stop offset="100%" stop-color="#7f0000"/>
+    </radialGradient>
+    <radialGradient id="blueHomeGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#82b1ff"/>
+      <stop offset="55%" stop-color="#2979ff"/>
+      <stop offset="100%" stop-color="#0d47a1"/>
+    </radialGradient>
+    <radialGradient id="yellowHomeGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#ffff8d"/>
+      <stop offset="55%" stop-color="#ffea00"/>
+      <stop offset="100%" stop-color="#e65100"/>
+    </radialGradient>
+    <linearGradient id="whiteCellGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eceff1"/>
+      <stop offset="100%" stop-color="#90a4ae"/>
+    </linearGradient>
+    <linearGradient id="greenCellGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#43a047"/>
+      <stop offset="100%" stop-color="#1b5e20"/>
+    </linearGradient>
+    <linearGradient id="redCellGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e53935"/>
+      <stop offset="100%" stop-color="#7f0000"/>
+    </linearGradient>
+    <linearGradient id="blueCellGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e88e5"/>
+      <stop offset="100%" stop-color="#0d47a1"/>
+    </linearGradient>
+    <linearGradient id="yellowCellGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fdd835"/>
+      <stop offset="100%" stop-color="#e65100"/>
+    </linearGradient>
+    <radialGradient id="centerGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff59d"/>
+      <stop offset="40%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#e65100"/>
+    </radialGradient>
+    <linearGradient id="greenStarGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#69f0ae"/>
+      <stop offset="100%" stop-color="#00695c"/>
+    </linearGradient>
+    <linearGradient id="redStarGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff5252"/>
+      <stop offset="100%" stop-color="#b71c1c"/>
+    </linearGradient>
+    <linearGradient id="blueStarGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#40c4ff"/>
+      <stop offset="100%" stop-color="#01579b"/>
+    </linearGradient>
+    <linearGradient id="yellowStarGrad" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffee58"/>
+      <stop offset="100%" stop-color="#f57f17"/>
+    </linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- BOARD BACKGROUND -->
+  <rect x="0" y="0" width="750" height="750" rx="14" fill="url(#boardBg)"/>
+  <rect x="0" y="0" width="750" height="750" rx="14" fill="none" stroke="url(#borderGrad)" stroke-width="4"/>
+  <rect x="5" y="5" width="740" height="740" rx="10" fill="none" stroke="rgba(255,215,0,0.2)" stroke-width="1.5"/>
+
+  <!-- HOME ZONES -->
+  <!-- GREEN: top-left (0,0)-(300,300) -->
+  <rect x="1" y="1" width="298" height="298" rx="12" fill="url(#greenHomeGrad)" filter="url(#shadow)"/>
+  <rect x="1" y="1" width="298" height="298" rx="12" fill="none" stroke="#00e676" stroke-width="2.5"/>
+  <rect x="1" y="150" width="211" height="211" rx="8" transform="rotate(-45 1 150)" fill="rgba(0,0,0,0.2)" stroke="#00e676" stroke-width="1.5"/>
+
+  <!-- RED: top-right (450,0)-(750,300) -->
+  <rect x="451" y="1" width="298" height="298" rx="12" fill="url(#redHomeGrad)" filter="url(#shadow)"/>
+  <rect x="451" y="1" width="298" height="298" rx="12" fill="none" stroke="#ff5252" stroke-width="2.5"/>
+  <rect x="451" y="150" width="211" height="211" rx="8" transform="rotate(-45 451 150)" fill="rgba(0,0,0,0.2)" stroke="#ff5252" stroke-width="1.5"/>
+
+  <!-- YELLOW: bottom-left (0,450)-(300,750) -->
+  <rect x="1" y="451" width="298" height="298" rx="12" fill="url(#yellowHomeGrad)" filter="url(#shadow)"/>
+  <rect x="1" y="451" width="298" height="298" rx="12" fill="none" stroke="#ffee58" stroke-width="2.5"/>
+  <rect x="1" y="600" width="211" height="211" rx="8" transform="rotate(-45 1 600)" fill="rgba(0,0,0,0.2)" stroke="#ffee58" stroke-width="1.5"/>
+
+  <!-- BLUE: bottom-right (450,450)-(750,750) -->
+  <rect x="451" y="451" width="298" height="298" rx="12" fill="url(#blueHomeGrad)" filter="url(#shadow)"/>
+  <rect x="451" y="451" width="298" height="298" rx="12" fill="none" stroke="#40c4ff" stroke-width="2.5"/>
+  <rect x="451" y="600" width="211" height="211" rx="8" transform="rotate(-45 451 600)" fill="rgba(0,0,0,0.2)" stroke="#40c4ff" stroke-width="1.5"/>
+
+  <!-- TRACK CELLS -->
+  <!-- === TOP TRACK (x=300-450, y=0-300) === -->
+  <!-- col x=300 (white, green-safe at y=100) -->
+  <rect x="300" y="0"   width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="50"  width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="100" width="50" height="50" rx="7" fill="url(#greenCellGrad)" stroke="#00e676" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="300" y="150" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="200" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="250" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <!-- col x=350 (red home path) -->
+  <rect x="350" y="0"   width="50" height="50" rx="7" fill="url(#redCellGrad)" stroke="#ff5252" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="50"  width="50" height="50" rx="7" fill="url(#redCellGrad)" stroke="#ff5252" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="100" width="50" height="50" rx="7" fill="url(#redCellGrad)" stroke="#ff5252" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="150" width="50" height="50" rx="7" fill="url(#redCellGrad)" stroke="#ff5252" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="200" width="50" height="50" rx="7" fill="url(#redCellGrad)" stroke="#ff5252" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="250" width="50" height="50" rx="7" fill="url(#redCellGrad)" stroke="#ff5252" stroke-width="2" filter="url(#shadow)"/>
+  <!-- col x=400 (white, red-safe at y=100) -->
+  <rect x="400" y="0"   width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="50"  width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="100" width="50" height="50" rx="7" fill="url(#redCellGrad)" stroke="#ff5252" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="400" y="150" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="200" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="250" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+
+  <!-- === BOTTOM TRACK (x=300-450, y=450-750) === -->
+  <!-- col x=300 (white, blue-safe at y=700) -->
+  <rect x="300" y="450" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="500" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="550" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="600" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="650" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="300" y="700" width="50" height="50" rx="7" fill="url(#blueCellGrad)" stroke="#40c4ff" stroke-width="2" filter="url(#shadow)"/>
+  <!-- col x=350 (yellow home path) -->
+  <rect x="350" y="450" width="50" height="50" rx="7" fill="url(#yellowCellGrad)" stroke="#FFD700" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="500" width="50" height="50" rx="7" fill="url(#yellowCellGrad)" stroke="#FFD700" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="550" width="50" height="50" rx="7" fill="url(#yellowCellGrad)" stroke="#FFD700" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="600" width="50" height="50" rx="7" fill="url(#yellowCellGrad)" stroke="#FFD700" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="650" width="50" height="50" rx="7" fill="url(#yellowCellGrad)" stroke="#FFD700" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="350" y="700" width="50" height="50" rx="7" fill="url(#yellowCellGrad)" stroke="#FFD700" stroke-width="2" filter="url(#shadow)"/>
+  <!-- col x=400 (white, yellow-safe at y=700) -->
+  <rect x="400" y="450" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="500" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="550" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="600" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="650" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="400" y="700" width="50" height="50" rx="7" fill="url(#yellowCellGrad)" stroke="#FFD700" stroke-width="2" filter="url(#shadow)"/>
+
+  <!-- === LEFT TRACK (x=0-300, y=300-450) === -->
+  <!-- row y=300 (white, yellow-safe at x=50) -->
+  <rect x="0"   y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="50"  y="300" width="50" height="50" rx="7" fill="url(#yellowCellGrad)" stroke="#FFD700" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="100" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="150" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="200" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="250" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <!-- row y=350 (green home path) -->
+  <rect x="0"   y="350" width="50" height="50" rx="7" fill="url(#greenCellGrad)" stroke="#00e676" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="50"  y="350" width="50" height="50" rx="7" fill="url(#greenCellGrad)" stroke="#00e676" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="100" y="350" width="50" height="50" rx="7" fill="url(#greenCellGrad)" stroke="#00e676" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="150" y="350" width="50" height="50" rx="7" fill="url(#greenCellGrad)" stroke="#00e676" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="200" y="350" width="50" height="50" rx="7" fill="url(#greenCellGrad)" stroke="#00e676" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="250" y="350" width="50" height="50" rx="7" fill="url(#greenCellGrad)" stroke="#00e676" stroke-width="2" filter="url(#shadow)"/>
+  <!-- row y=400 (white, green-safe at x=0) -->
+  <rect x="0"   y="400" width="50" height="50" rx="7" fill="url(#greenCellGrad)" stroke="#00e676" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="50"  y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="100" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="150" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="200" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="250" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+
+  <!-- === RIGHT TRACK (x=450-750, y=300-450) === -->
+  <!-- row y=300 (white, red-safe at x=650) -->
+  <rect x="450" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="500" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="550" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="600" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="650" y="300" width="50" height="50" rx="7" fill="url(#redCellGrad)" stroke="#ff5252" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="700" y="300" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <!-- row y=350 (blue home path) -->
+  <rect x="450" y="350" width="50" height="50" rx="7" fill="url(#blueCellGrad)" stroke="#40c4ff" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="500" y="350" width="50" height="50" rx="7" fill="url(#blueCellGrad)" stroke="#40c4ff" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="550" y="350" width="50" height="50" rx="7" fill="url(#blueCellGrad)" stroke="#40c4ff" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="600" y="350" width="50" height="50" rx="7" fill="url(#blueCellGrad)" stroke="#40c4ff" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="650" y="350" width="50" height="50" rx="7" fill="url(#blueCellGrad)" stroke="#40c4ff" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="700" y="350" width="50" height="50" rx="7" fill="url(#blueCellGrad)" stroke="#40c4ff" stroke-width="2" filter="url(#shadow)"/>
+  <!-- row y=400 (white, blue-safe at x=700) -->
+  <rect x="450" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="500" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="550" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="600" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="650" y="400" width="50" height="50" rx="7" fill="url(#whiteCellGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="700" y="400" width="50" height="50" rx="7" fill="url(#blueCellGrad)" stroke="#40c4ff" stroke-width="2" filter="url(#shadow)"/>
+
+  <!-- CENTER STAR (300,300)-(450,450), center=375,375 -->
+  <rect x="300" y="300" width="150" height="150" rx="4" fill="#0d1b2a"/>
+  <path d="M300 450 L375 375 L450 450 Z" fill="url(#yellowStarGrad)" filter="url(#shadow)"/>
+  <path d="M300 300 L375 375 L300 450 Z" fill="url(#greenStarGrad)" filter="url(#shadow)"/>
+  <path d="M300 300 L375 375 L450 300 Z" fill="url(#redStarGrad)" filter="url(#shadow)"/>
+  <path d="M450 300 L375 375 L450 450 Z" fill="url(#blueStarGrad)" filter="url(#shadow)"/>
+  <circle cx="375" cy="375" r="26" fill="url(#centerGrad)" filter="url(#glow)"/>
+  <circle cx="375" cy="375" r="17" fill="rgba(0,0,0,0.35)"/>
+  <circle cx="375" cy="375" r="10" fill="url(#centerGrad)"/>
+  <circle cx="375" cy="375" r="26" fill="none" stroke="rgba(255,255,220,0.5)" stroke-width="1.5"/>
+
+  <!-- PIECE SLOTS (matching JS allPiecesePos exactly) -->
+  <!-- GREEN: (50,125) (125,50) (200,125) (125,200) -->
+  <rect x="50"  y="125" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#00e676" stroke-width="2"/>
+  <rect x="125" y="50"  width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#00e676" stroke-width="2"/>
+  <rect x="200" y="125" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#00e676" stroke-width="2"/>
+  <rect x="125" y="200" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#00e676" stroke-width="2"/>
+
+  <!-- RED: (500,125) (575,50) (650,125) (575,200) -->
+  <rect x="500" y="125" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#ff5252" stroke-width="2"/>
+  <rect x="575" y="50"  width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#ff5252" stroke-width="2"/>
+  <rect x="650" y="125" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#ff5252" stroke-width="2"/>
+  <rect x="575" y="200" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#ff5252" stroke-width="2"/>
+
+  <!-- BLUE: (500,575) (575,500) (650,575) (575,650) -->
+  <rect x="500" y="575" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#40c4ff" stroke-width="2"/>
+  <rect x="575" y="500" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#40c4ff" stroke-width="2"/>
+  <rect x="650" y="575" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#40c4ff" stroke-width="2"/>
+  <rect x="575" y="650" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#40c4ff" stroke-width="2"/>
+
+  <!-- YELLOW: (50,575) (125,500) (200,575) (125,650) -->
+  <rect x="50"  y="575" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#FFD700" stroke-width="2"/>
+  <rect x="125" y="500" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#FFD700" stroke-width="2"/>
+  <rect x="200" y="575" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#FFD700" stroke-width="2"/>
+  <rect x="125" y="650" width="50" height="50" rx="9" fill="rgba(0,0,0,0.3)" stroke="#FFD700" stroke-width="2"/>
+
+  <!-- FINAL BORDER -->
+  <rect x="0" y="0" width="750" height="750" rx="14" fill="none" stroke="url(#borderGrad)" stroke-width="3.5"/>
+  <circle cx="14" cy="14" r="5" fill="#FFD700" opacity="0.7"/>
+  <circle cx="736" cy="14" r="5" fill="#FFD700" opacity="0.7"/>
+  <circle cx="14" cy="736" r="5" fill="#FFD700" opacity="0.7"/>
+  <circle cx="736" cy="736" r="5" fill="#FFD700" opacity="0.7"/>
+</svg>
