@@ -13,6 +13,9 @@ let chance  = 0;
 let PLAYERS = {};
 let waitingForPieceClick = false;
 let totalPlayers = 4;
+let _pendingNum    = undefined;
+let _pendingSpirit = undefined;
+let _diceJustTouched = false;
 
 var canvas = document.getElementById('theCanvas');
 var ctx    = canvas.getContext('2d');
@@ -50,8 +53,8 @@ canvas.addEventListener('click', function(e){
 function pieceHitTest(Xp, Yp) {
     if(!waitingForPieceClick) return;
 
-    var num    = window._pendingNum;
-    var spirit = window._pendingSpirit;
+    var num    = _pendingNum;
+    var spirit = _pendingSpirit;
     if(num === undefined || !spirit) return;
 
     var clicked = false;
@@ -72,9 +75,9 @@ function pieceHitTest(Xp, Yp) {
             );
 
             if(canMove){
-                waitingForPieceClick   = false;
-                window._pendingNum     = undefined;
-                window._pendingSpirit  = undefined;
+                waitingForPieceClick = false;
+                _pendingNum     = undefined;
+                _pendingSpirit  = undefined;
 
                 PLAYERS[chance].myPieces[i].update(num);
                 if(window.LudoSound) LudoSound.move();
@@ -273,6 +276,7 @@ function loadAllPieces(){
                     let cd = document.getElementById('dice-' + i);
                     if(cd){
                         cd.addEventListener('click', function(){
+                            if(_diceJustTouched){ _diceJustTouched = false; return; }
                             if(this.classList.contains('disabled')) return;
                             if(Number(this.dataset.pid) !== chance) return;
                             if(window.LudoSound) LudoSound.unlock();
@@ -285,6 +289,7 @@ function loadAllPieces(){
                             if(this.classList.contains('disabled')) return;
                             if(Number(this.dataset.pid) !== chance) return;
                             if(window.LudoSound) LudoSound.unlock();
+                            _diceJustTouched = true;
                             offlineDiceAction();
                         }, {passive: false});
                         cd.dataset.pid = i;
@@ -323,8 +328,8 @@ function offlineDiceAction(){
     }
 
     // pending state save کرو
-    window._pendingNum    = num;
-    window._pendingSpirit = spirit;
+    _pendingNum    = num;
+    _pendingSpirit = spirit;
     waitingForPieceClick  = true;
     outputMessage('✋ ' + USERNAMES[chance] + ' — اپنی گوٹی چھوئیں', 'server');
 }
@@ -349,8 +354,8 @@ function nextTurn(lastNum){
 function activateChance(id){
     chance = id;
     waitingForPieceClick  = false;
-    window._pendingNum    = undefined;
-    window._pendingSpirit = undefined;
+    _pendingNum    = undefined;
+    _pendingSpirit = undefined;
     deactivateAll();
     let corner = document.getElementById('corner-' + id);
     let dice   = document.getElementById('dice-'   + id);
