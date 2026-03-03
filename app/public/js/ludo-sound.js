@@ -136,13 +136,12 @@ const LudoSound = (() => {
         playTone(660, 'square', now + 0.18, 0.12, 0.35, ac);
     }
 
-    // Public API
-    return { dice, move, kill, win, six };
-})();
+// ── 🔓 Unlock ──
+    function unlock() {
+        let ac = getCtx();
+        if (ac.state === 'suspended') ac.resume();
+    }
 
-// ── Mobile پر AudioContext unlock ──
-// پہلی touch پر unlock کرنا ضروری ہے
-LudoSound.unlock = function(){
-    let ac = getCtx();
-    if(ac.state === 'suspended') ac.resume();
-};
+    // Public API
+    return { dice, move, kill, win, six, unlock };
+})();
