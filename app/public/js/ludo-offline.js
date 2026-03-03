@@ -284,7 +284,7 @@ function handleCanvasInput(Xp, Yp){
     for(let i=0;i<4;i++){
         let px = PLAYERS[chance].myPieces[i].x;
         let py = PLAYERS[chance].myPieces[i].y;
-        if(Xp >= px-5 && Xp <= px+55 && Yp >= py-5 && Yp <= py+55){
+        if(Xp >= px-75 && Xp <= px+125 && Yp >= py-75 && Yp <= py+125){
             let piece = PLAYERS[chance].myPieces[i];
             let canMove = spirit.includes(i) && (
                 (piece.pos === -1 && num === 6) ||
@@ -424,4 +424,4 @@ function outputMessage(msg, who){
     div.innerHTML = '<p style="text-shadow: 0 0 6px ' + color + '">' + msg + '</p>';
     board.appendChild(div);
     board.scrollTop = board.scrollHeight;
-} 
+}
