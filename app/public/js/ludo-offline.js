@@ -26,28 +26,34 @@ function resizeCanvas(){
 resizeCanvas();
 window.addEventListener('resize', () => { resizeCanvas(); allPlayerHandler(); });
 
+// ── FIX: Canvas coordinates کو internal size پر scale کرنے کا function ──
+function getScaledCoords(clientX, clientY) {
+    let rect = canvas.getBoundingClientRect();
+    // CSS size سے internal canvas size پر scale کرو
+    let scaleX = canvas.width  / rect.width;
+    let scaleY = canvas.height / rect.height;
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top)  * scaleY
+    };
+}
+
 // Touch handler
 canvas.addEventListener('touchstart', function(e){
     e.preventDefault();
     let touch = e.touches[0];
-    let rect = canvas.getBoundingClientRect();
-    let scaleX = canvas.width  / rect.width;
-    let scaleY = canvas.height / rect.height;
-    let x = (touch.clientX - rect.left) * scaleX;
-    let y = (touch.clientY - rect.top)  * scaleY;
+    // FIX: scale کرو
+    let coords = getScaledCoords(touch.clientX, touch.clientY);
     canvas._justTouched = true;
-    handleCanvasInput(x, y);
+    handleCanvasInput(coords.x, coords.y);
 }, {passive: false});
 
 // Desktop mouse click
 canvas.addEventListener('click', function(e){
     if(canvas._justTouched){ canvas._justTouched = false; return; }
-    let rect = canvas.getBoundingClientRect();
-    let scaleX = canvas.width  / rect.width;
-    let scaleY = canvas.height / rect.height;
-    let x = (e.clientX - rect.left) * scaleX;
-    let y = (e.clientY - rect.top)  * scaleY;
-    handleCanvasInput(x, y);
+    // FIX: scale کرو
+    let coords = getScaledCoords(e.clientX, e.clientY);
+    handleCanvasInput(coords.x, coords.y);
 });
 
 let allPiecesePos = {
@@ -266,6 +272,22 @@ function offlineDiceAction(){
         return;
     }
 
+    // ── اگر صرف ایک گوٹی چل سکتی ہے تو خود چلاؤ ──
+    if(spirit.length === 1){
+        waitingForPieceClick = false;
+        let i = spirit[0];
+        PLAYERS[chance].myPieces[i].update(num);
+        if(window.LudoSound) LudoSound.move();
+        iKill(chance, i);
+        allPlayerHandler();
+        if(PLAYERS[chance].didIwin()){
+            showWin(chance);
+            return;
+        }
+        setTimeout(() => nextTurn(num), 400);
+        return;
+    }
+
     // ── FIX: canvas پر pending data save کرو ──
     waitingForPieceClick  = true;
     canvas._pendingNum    = num;
@@ -281,10 +303,16 @@ function handleCanvasInput(Xp, Yp){
     let spirit = canvas._pendingSpirit;
     if(num === undefined || spirit === undefined) return;
 
+    // FIX: piece size 50px ہے، صرف اسی range میں click چیک کرو
+    // تھوڑا سا margin (10px) رکھو تاکہ touch آسان ہو
+    const HIT = 60; // 50px piece + 10px margin
+
     for(let i=0;i<4;i++){
         let px = PLAYERS[chance].myPieces[i].x;
         let py = PLAYERS[chance].myPieces[i].y;
-        if(Xp >= px-75 && Xp <= px+125 && Yp >= py-75 && Yp <= py+125){
+
+        // FIX: صحیح range — piece کے اندر کلک چیک کرو
+        if(Xp >= px - 5 && Xp <= px + HIT && Yp >= py - 5 && Yp <= py + HIT){
             let piece = PLAYERS[chance].myPieces[i];
             let canMove = spirit.includes(i) && (
                 (piece.pos === -1 && num === 6) ||
