@@ -424,4 +424,4 @@ function outputMessage(msg, who){
     div.innerHTML = '<p style="text-shadow: 0 0 6px ' + color + '">' + msg + '</p>';
     board.appendChild(div);
     board.scrollTop = board.scrollHeight;
-}
+} 
