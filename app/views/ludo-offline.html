@@ -108,8 +108,9 @@
         }
     </style>
 </head>
-<body>
 
+<body onclick="if(window.LudoSound)LudoSound.unlock();" 
+      ontouchstart="if(window.LudoSound)LudoSound.unlock();">
     <!-- Player Count Select -->
     <div id="player-select-modal">
         <h2>📱 Offline Mode</h2>
