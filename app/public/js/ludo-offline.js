@@ -20,6 +20,7 @@ canvas.height = 750;
 canvas.width  = 750;
 
 // ── FIX 1: Touch کو صحیح canvas coordinates میں بدلو ──
+// Touch handler - صرف touchstart، click event نہیں چلاتے
 canvas.addEventListener('touchstart', function(e){
     e.preventDefault();
     let touch = e.touches[0];
@@ -28,14 +29,20 @@ canvas.addEventListener('touchstart', function(e){
     let scaleY = canvas.height / rect.height;
     let x = (touch.clientX - rect.left) * scaleX;
     let y = (touch.clientY - rect.top)  * scaleY;
-    // fake click event with already-scaled coordinates
-    canvas._touchX = x;
-    canvas._touchY = y;
-    canvas.dispatchEvent(new MouseEvent('click', {
-        clientX: touch.clientX,
-        clientY: touch.clientY
-    }));
+    handleCanvasInput(x, y);
 }, {passive: false});
+
+// Desktop mouse click
+canvas.addEventListener('click', function(e){
+    // touch نے پہلے ہی handle کر لیا ہوگا
+    if(canvas._justTouched){ canvas._justTouched = false; return; }
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width  / rect.width;
+    let scaleY = canvas.height / rect.height;
+    let x = (e.clientX - rect.left) * scaleX;
+    let y = (e.clientY - rect.top)  * scaleY;
+    handleCanvasInput(x, y);
+});
 
 let allPiecesePos = {
     0:[{x: 50,y:125},{x:125,y: 50},{x:200,y:125},{x:125,y:200}],
@@ -183,6 +190,12 @@ class Piece {
 
 // ── Game init ──
 
+// موبائل پر پہلی touch سے آواز unlock
+document.addEventListener('touchstart', function unlockAudio(){
+    if(window.LudoSound) LudoSound.unlock();
+    document.removeEventListener('touchstart', unlockAudio);
+}, {once: true});
+
 function startOffline(numPlayers){
     totalPlayers = numPlayers;
     MYROOM = [];
@@ -209,8 +222,7 @@ function loadAllPieces(){
                         cd.addEventListener('click', function(){
                             if(this.classList.contains('disabled')) return;
                             if(Number(this.dataset.pid) !== chance) return;
-                            // ── FIX 3: آواز کے لیے AudioContext unlock ──
-                            if(window.LudoSound) LudoSound.unlock();
+                                if(window.LudoSound){ LudoSound.unlock(); }
                             offlineDiceAction();
                         });
                         cd.dataset.pid = i;
@@ -250,48 +262,34 @@ function offlineDiceAction(){
     waitingForPieceClick = true;
     outputMessage('گوٹی کو چھوئیں', 'server');
 
-    // ── FIX 1: ہر بار نیا listener — پرانا ہٹاؤ ──
-    canvas.removeEventListener('click', pieceClickHandler);
-    canvas._pendingNum = num;
-    canvas._pendingSpirit = spirit;
-    canvas.addEventListener('click', pieceClickHandler);
+    waitingForPieceClick = true;
 }
 
-function pieceClickHandler(e){
+// ── مرکزی input handler — touch اور mouse دونوں یہاں آتے ہیں ──
+function handleCanvasInput(Xp, Yp){
+    if(!waitingForPieceClick) return;
     let num    = canvas._pendingNum;
     let spirit = canvas._pendingSpirit;
-
-    // ── FIX 2: touch کے لیے pre-scaled coordinates استعمال کرو ──
-    let Xp, Yp;
-    if(canvas._touchX !== undefined){
-        Xp = canvas._touchX;
-        Yp = canvas._touchY;
-        canvas._touchX = undefined;
-        canvas._touchY = undefined;
-    } else {
-        let rect = canvas.getBoundingClientRect();
-        let scaleX = canvas.width  / rect.width;
-        let scaleY = canvas.height / rect.height;
-        Xp = (e.clientX - rect.left) * scaleX;
-        Yp = (e.clientY - rect.top)  * scaleY;
-    }
+    if(num === undefined) return;
 
     for(let i=0;i<4;i++){
         let px = PLAYERS[chance].myPieces[i].x;
         let py = PLAYERS[chance].myPieces[i].y;
-        if(Xp >= px && Xp <= px+50 && Yp >= py && Yp <= py+50){
+        // ہر طرف 5px extra tolerance دیں
+        if(Xp >= px-5 && Xp <= px+55 && Yp >= py-5 && Yp <= py+55){
             let piece = PLAYERS[chance].myPieces[i];
             let canMove = spirit.includes(i) && (
                 (piece.pos === -1 && num === 6) ||
                 (piece.pos > -1 && piece.pos + num <= 56)
             );
             if(canMove){
+                waitingForPieceClick = false;
+                canvas._pendingNum = undefined;
+                canvas._pendingSpirit = undefined;
                 PLAYERS[chance].myPieces[i].update(num);
                 if(window.LudoSound) LudoSound.move();
                 iKill(chance, i);
                 allPlayerHandler();
-                canvas.removeEventListener('click', pieceClickHandler);
-                waitingForPieceClick = false;
                 if(PLAYERS[chance].didIwin()){
                     showWin(chance);
                     return;
