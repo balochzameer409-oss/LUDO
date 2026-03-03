@@ -1,6 +1,5 @@
 // =====================================================
 // LUDO OFFLINE MODE
-// click handling بالکل online ludo.js جیسا
 // =====================================================
 
 const USERNAMES  = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
@@ -20,16 +19,84 @@ var ctx    = canvas.getContext('2d');
 canvas.height = 750;
 canvas.width  = 750;
 
-// ── Online جیسا: touch کو click میں بدلو ──
+// ── Coordinates scale کرنے کا function ──
+function getCanvasXY(clientX, clientY) {
+    var rect   = canvas.getBoundingClientRect();
+    var scaleX = canvas.width  / rect.width;
+    var scaleY = canvas.height / rect.height;
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top)  * scaleY
+    };
+}
+
+// ── TOUCH: سیدھا pieceHitTest کرو ──
 canvas.addEventListener('touchstart', function(e){
     e.preventDefault();
-    let touch = e.touches[0];
-    let mouseEvent = new MouseEvent('click', {
-        clientX: touch.clientX,
-        clientY: touch.clientY
-    });
-    canvas.dispatchEvent(mouseEvent);
+    if(!waitingForPieceClick) return; // صرف تب کام کرو جب گوٹی click کا انتظار ہو
+    var touch = e.touches[0];
+    var pos = getCanvasXY(touch.clientX, touch.clientY);
+    pieceHitTest(pos.x, pos.y);
 }, {passive: false});
+
+// ── CLICK (desktop) ──
+canvas.addEventListener('click', function(e){
+    if(!waitingForPieceClick) return;
+    var pos = getCanvasXY(e.clientX, e.clientY);
+    pieceHitTest(pos.x, pos.y);
+});
+
+// ── گوٹی click check — یہ touch اور click دونوں سے بلایا جاتا ہے ──
+function pieceHitTest(Xp, Yp) {
+    if(!waitingForPieceClick) return;
+
+    var num    = window._pendingNum;
+    var spirit = window._pendingSpirit;
+    if(num === undefined || !spirit) return;
+
+    var clicked = false;
+
+    for(var i=0;i<4;i++){
+        var px = PLAYERS[chance].myPieces[i].x;
+        var py = PLAYERS[chance].myPieces[i].y;
+        var dx = Xp - px;
+        var dy = Yp - py;
+
+        // piece 50x50 ہے — 0 سے 50 range چیک کرو
+        if(dx >= 0 && dx <= 50 && dy >= 0 && dy <= 50){
+            clicked = true;
+            var piece = PLAYERS[chance].myPieces[i];
+            var canMove = spirit.includes(i) && (
+                (piece.pos === -1 && num === 6) ||
+                (piece.pos > -1  && piece.pos + num <= 56)
+            );
+
+            if(canMove){
+                waitingForPieceClick   = false;
+                window._pendingNum     = undefined;
+                window._pendingSpirit  = undefined;
+
+                PLAYERS[chance].myPieces[i].update(num);
+                if(window.LudoSound) LudoSound.move();
+                iKill(chance, i);
+                allPlayerHandler();
+
+                if(PLAYERS[chance].didIwin()){
+                    showWin(chance);
+                    return;
+                }
+                setTimeout(function(){ nextTurn(num); }, 400);
+            } else {
+                outputMessage('یہ گوٹی نہیں چل سکتی!', 'server');
+            }
+            return;
+        }
+    }
+
+    if(!clicked){
+        outputMessage('گوٹی پر کلک کریں — ' + USERNAMES[chance], 'server');
+    }
+}
 
 let allPiecesePos = {
     0:[{x: 50,y:125},{x:125,y: 50},{x:200,y:125},{x:125,y:200}],
@@ -211,6 +278,15 @@ function loadAllPieces(){
                             if(window.LudoSound) LudoSound.unlock();
                             offlineDiceAction();
                         });
+                        // touch پر dice
+                        cd.addEventListener('touchstart', function(e){
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if(this.classList.contains('disabled')) return;
+                            if(Number(this.dataset.pid) !== chance) return;
+                            if(window.LudoSound) LudoSound.unlock();
+                            offlineDiceAction();
+                        }, {passive: false});
                         cd.dataset.pid = i;
                     }
                 }
@@ -246,57 +322,11 @@ function offlineDiceAction(){
         return;
     }
 
-    // ── بالکل online جیسا: نیا named clickHandler لگاؤ ──
-    waitingForPieceClick = true;
-    outputMessage('گوٹی کو چھوئیں', 'server');
-
-    canvas.addEventListener('click', function clickHandler(e){
-        let rect   = canvas.getBoundingClientRect();
-        let scaleX = canvas.width  / rect.width;
-        let scaleY = canvas.height / rect.height;
-        let Xp = (e.clientX - rect.left) * scaleX;
-        let Yp = (e.clientY - rect.top)  * scaleY;
-
-        let clickedAny = false;
-
-        for(let i=0;i<4;i++){
-            let px = PLAYERS[chance].myPieces[i].x;
-            let py = PLAYERS[chance].myPieces[i].y;
-
-            // ── بالکل online جیسا: 0 سے 45 range ──
-            if(Xp - px < 45 && Xp - px > 0 && Yp - py < 45 && Yp - py > 0){
-                clickedAny = true;
-                let piece = PLAYERS[chance].myPieces[i];
-                let canMove = spirit.includes(i) && (
-                    (piece.pos === -1 && num === 6) ||
-                    (piece.pos > -1  && piece.pos + num <= 56)
-                );
-
-                if(canMove){
-                    canvas.removeEventListener('click', clickHandler);
-                    waitingForPieceClick = false;
-
-                    PLAYERS[chance].myPieces[i].update(num);
-                    if(window.LudoSound) LudoSound.move();
-                    iKill(chance, i);
-                    allPlayerHandler();
-
-                    if(PLAYERS[chance].didIwin()){
-                        showWin(chance);
-                        return;
-                    }
-                    setTimeout(() => nextTurn(num), 400);
-                } else {
-                    outputMessage('یہ گوٹی نہیں چل سکتی!', 'server');
-                }
-                return;
-            }
-        }
-
-        if(!clickedAny){
-            outputMessage('اپنے رنگ کی گوٹی کو چھوئیں', 'server');
-        }
-    });
+    // pending state save کرو
+    window._pendingNum    = num;
+    window._pendingSpirit = spirit;
+    waitingForPieceClick  = true;
+    outputMessage('✋ ' + USERNAMES[chance] + ' — اپنی گوٹی چھوئیں', 'server');
 }
 
 // ── Turn management ──
@@ -318,7 +348,9 @@ function nextTurn(lastNum){
 
 function activateChance(id){
     chance = id;
-    waitingForPieceClick = false;
+    waitingForPieceClick  = false;
+    window._pendingNum    = undefined;
+    window._pendingSpirit = undefined;
     deactivateAll();
     let corner = document.getElementById('corner-' + id);
     let dice   = document.getElementById('dice-'   + id);
