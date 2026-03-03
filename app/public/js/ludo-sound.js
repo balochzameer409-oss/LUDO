@@ -110,3 +110,4 @@ var LudoSound = (function () {
     }
     document.addEventListener('click', _u);
     document.addEventListener('touchstart', _u);
+})();
