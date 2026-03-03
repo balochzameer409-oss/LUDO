@@ -1,5 +1,5 @@
 // =====================================================
-// LUDO OFFLINE MODE
+// LUDO OFFLINE MODE — final clean version
 // =====================================================
 
 const USERNAMES  = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
@@ -11,290 +11,280 @@ const PASS_ICONS = ['🟢','🔴','🔵','🟡'];
 let MYROOM  = [];
 let chance  = 0;
 let PLAYERS = {};
-let waitingForPieceClick = false;
 let totalPlayers = 4;
-let _pendingNum    = undefined;
-let _pendingSpirit = undefined;
-let _diceJustTouched = false;
+
+// pending state — module scope میں
+let _waiting = false;
+let _num     = undefined;
+let _spirit  = undefined;
 
 var canvas = document.getElementById('theCanvas');
 var ctx    = canvas.getContext('2d');
 canvas.height = 750;
 canvas.width  = 750;
 
-// ── Coordinates scale کرنے کا function ──
-function getCanvasXY(clientX, clientY) {
-    var rect   = canvas.getBoundingClientRect();
-    var scaleX = canvas.width  / rect.width;
-    var scaleY = canvas.height / rect.height;
+// ── scaled coordinates ──
+function scaledXY(clientX, clientY) {
+    var r = canvas.getBoundingClientRect();
     return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top)  * scaleY
+        x: (clientX - r.left) * (750 / r.width),
+        y: (clientY - r.top)  * (750 / r.height)
     };
 }
 
-// ── TOUCH: سیدھا pieceHitTest کرو ──
-canvas.addEventListener('touchstart', function(e){
-    e.preventDefault();
-    if(!waitingForPieceClick) return; // صرف تب کام کرو جب گوٹی click کا انتظار ہو
-    var touch = e.touches[0];
-    var pos = getCanvasXY(touch.clientX, touch.clientY);
-    pieceHitTest(pos.x, pos.y);
-}, {passive: false});
+// ── گوٹی hit test ──
+function tryMovePiece(x, y) {
+    if (!_waiting || _num === undefined || !_spirit) return;
 
-// ── CLICK (desktop) ──
-canvas.addEventListener('click', function(e){
-    if(!waitingForPieceClick) return;
-    var pos = getCanvasXY(e.clientX, e.clientY);
-    pieceHitTest(pos.x, pos.y);
-});
-
-// ── گوٹی click check — یہ touch اور click دونوں سے بلایا جاتا ہے ──
-function pieceHitTest(Xp, Yp) {
-    if(!waitingForPieceClick) return;
-
-    var num    = _pendingNum;
-    var spirit = _pendingSpirit;
-    if(num === undefined || !spirit) return;
-
-    var clicked = false;
-
-    for(var i=0;i<4;i++){
+    for (var i = 0; i < 4; i++) {
         var px = PLAYERS[chance].myPieces[i].x;
         var py = PLAYERS[chance].myPieces[i].y;
-        var dx = Xp - px;
-        var dy = Yp - py;
-
-        // piece 50x50 ہے — 0 سے 50 range چیک کرو
-        if(dx >= 0 && dx <= 50 && dy >= 0 && dy <= 50){
-            clicked = true;
+        // piece 50x50 ہے
+        if (x >= px && x <= px + 50 && y >= py && y <= py + 50) {
             var piece = PLAYERS[chance].myPieces[i];
-            var canMove = spirit.includes(i) && (
-                (piece.pos === -1 && num === 6) ||
-                (piece.pos > -1  && piece.pos + num <= 56)
+            var canMove = _spirit.includes(i) && (
+                (piece.pos === -1 && _num === 6) ||
+                (piece.pos  >  -1 && piece.pos + _num <= 56)
             );
+            if (canMove) {
+                var movedNum = _num;
+                _waiting = false;
+                _num     = undefined;
+                _spirit  = undefined;
 
-            if(canMove){
-                waitingForPieceClick = false;
-                _pendingNum     = undefined;
-                _pendingSpirit  = undefined;
-
-                PLAYERS[chance].myPieces[i].update(num);
-                if(window.LudoSound) LudoSound.move();
+                piece.update(movedNum);
+                if (window.LudoSound) LudoSound.move();
                 iKill(chance, i);
                 allPlayerHandler();
 
-                if(PLAYERS[chance].didIwin()){
+                if (PLAYERS[chance].didIwin()) {
                     showWin(chance);
                     return;
                 }
-                setTimeout(function(){ nextTurn(num); }, 400);
+                setTimeout(function () { nextTurn(movedNum); }, 400);
             } else {
                 outputMessage('یہ گوٹی نہیں چل سکتی!', 'server');
             }
-            return;
+            return; // hit ہوا — چاہے چلی یا نہیں، return
         }
     }
-
-    if(!clicked){
-        outputMessage('گوٹی پر کلک کریں — ' + USERNAMES[chance], 'server');
-    }
+    // خالی جگہ پر click
+    outputMessage('اپنی گوٹی چھوئیں', 'server');
 }
 
-let allPiecesePos = {
-    0:[{x: 50,y:125},{x:125,y: 50},{x:200,y:125},{x:125,y:200}],
-    1:[{x:500,y:125},{x:575,y: 50},{x:650,y:125},{x:575,y:200}],
-    2:[{x:500,y:575},{x:575,y:500},{x:650,y:575},{x:575,y:650}],
-    3:[{x: 50,y:575},{x:125,y:500},{x:200,y:575},{x:125,y:650}]
+// ── canvas touch ──
+canvas.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!_waiting) return;
+    var t = e.touches[0];
+    var p = scaledXY(t.clientX, t.clientY);
+    tryMovePiece(p.x, p.y);
+}, { passive: false });
+
+// ── canvas click (desktop) ──
+canvas.addEventListener('click', function (e) {
+    if (!_waiting) return;
+    var p = scaledXY(e.clientX, e.clientY);
+    tryMovePiece(p.x, p.y);
+});
+
+// ── Piece positions ──
+var allPiecesePos = {
+    0: [{ x: 50, y: 125 }, { x: 125, y: 50  }, { x: 200, y: 125 }, { x: 125, y: 200 }],
+    1: [{ x: 500, y: 125 }, { x: 575, y: 50  }, { x: 650, y: 125 }, { x: 575, y: 200 }],
+    2: [{ x: 500, y: 575 }, { x: 575, y: 500 }, { x: 650, y: 575 }, { x: 575, y: 650 }],
+    3: [{ x: 50,  y: 575 }, { x: 125, y: 500 }, { x: 200, y: 575 }, { x: 125, y: 650 }]
 };
 
-let homeTilePos = {
-    0:{0:{x: 50,y:300},1:{x:300,y:100}},
-    1:{0:{x:400,y: 50},1:{x:600,y:300}},
-    2:{0:{x:650,y:400},1:{x:400,y:600}},
-    3:{0:{x:300,y:650},1:{x:100,y:400}}
+var homeTilePos = {
+    0: { 0: { x: 50,  y: 300 }, 1: { x: 300, y: 100 } },
+    1: { 0: { x: 400, y: 50  }, 1: { x: 600, y: 300 } },
+    2: { 0: { x: 650, y: 400 }, 1: { x: 400, y: 600 } },
+    3: { 0: { x: 300, y: 650 }, 1: { x: 100, y: 400 } }
 };
 
+// ── Player & Piece classes ──
 class Player {
-    constructor(id){
+    constructor(id) {
         this.id = String(id);
         this.myPieces = {};
-        for(let i=0;i<4;i++) this.myPieces[i] = new Piece(String(i), String(id));
+        for (let i = 0; i < 4; i++) this.myPieces[i] = new Piece(String(i), String(id));
         this.won = 0;
     }
-    draw(){ for(let i=0;i<4;i++) this.myPieces[i].draw(); }
-    didIwin(){ return this.won == 4 ? 1 : 0; }
+    draw() { for (let i = 0; i < 4; i++) this.myPieces[i].draw(); }
+    didIwin() { return this.won === 4 ? 1 : 0; }
 }
 
 class Piece {
-    constructor(i, id){
-        this.path = [];
+    constructor(i, id) {
+        this.path     = [];
         this.color_id = String(id);
-        this.Pid = String(i);
-        this.pos = -1;
-        this.x = parseInt(allPiecesePos[this.color_id][this.Pid].x);
-        this.y = parseInt(allPiecesePos[this.color_id][this.Pid].y);
-        this.image = PIECES[this.color_id];
-        switch(id){
+        this.Pid      = String(i);
+        this.pos      = -1;
+        this.x        = allPiecesePos[id][i].x;
+        this.y        = allPiecesePos[id][i].y;
+        this.image    = PIECES[id];
+
+        switch (id) {
             case '0':
-                for(let i=0;i<4;i++){this.path.push(this.oneStepToRight)}
+                for (let i = 0; i < 4; i++) this.path.push(this.oneStepToRight);
                 this.path.push(this.oneStepTowards45);
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToTop)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToRight)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToBottom)}
-                this.path.push(this.oneStepTowards315)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToRight)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToBottom)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToLeft)}
-                this.path.push(this.oneStepTowards225)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToBottom)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToLeft)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToTop)}
-                this.path.push(this.oneStepTowards135)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToLeft)}
-                this.path.push(this.oneStepToTop)
-                for(let i=0;i<6;i++){this.path.push(this.oneStepToRight)}
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToTop);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToRight);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToBottom);
+                this.path.push(this.oneStepTowards315);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToRight);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToBottom);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToLeft);
+                this.path.push(this.oneStepTowards225);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToBottom);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToLeft);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToTop);
+                this.path.push(this.oneStepTowards135);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToLeft);
+                this.path.push(this.oneStepToTop);
+                for (let i = 0; i < 6; i++) this.path.push(this.oneStepToRight);
                 break;
             case '1':
-                for(let i=0;i<4;i++){this.path.push(this.oneStepToBottom)}
-                this.path.push(this.oneStepTowards315)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToRight)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToBottom)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToLeft)}
-                this.path.push(this.oneStepTowards225)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToBottom)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToLeft)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToTop)}
-                this.path.push(this.oneStepTowards135)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToLeft)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToTop)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToRight)}
+                for (let i = 0; i < 4; i++) this.path.push(this.oneStepToBottom);
+                this.path.push(this.oneStepTowards315);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToRight);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToBottom);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToLeft);
+                this.path.push(this.oneStepTowards225);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToBottom);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToLeft);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToTop);
+                this.path.push(this.oneStepTowards135);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToLeft);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToTop);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToRight);
                 this.path.push(this.oneStepTowards45);
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToTop)}
-                this.path.push(this.oneStepToRight)
-                for(let i=0;i<6;i++){this.path.push(this.oneStepToBottom)}
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToTop);
+                this.path.push(this.oneStepToRight);
+                for (let i = 0; i < 6; i++) this.path.push(this.oneStepToBottom);
                 break;
             case '2':
-                for(let i=0;i<4;i++){this.path.push(this.oneStepToLeft)}
-                this.path.push(this.oneStepTowards225)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToBottom)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToLeft)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToTop)}
-                this.path.push(this.oneStepTowards135)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToLeft)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToTop)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToRight)}
+                for (let i = 0; i < 4; i++) this.path.push(this.oneStepToLeft);
+                this.path.push(this.oneStepTowards225);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToBottom);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToLeft);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToTop);
+                this.path.push(this.oneStepTowards135);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToLeft);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToTop);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToRight);
                 this.path.push(this.oneStepTowards45);
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToTop)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToRight)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToBottom)}
-                this.path.push(this.oneStepTowards315)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToRight)}
-                this.path.push(this.oneStepToBottom)
-                for(let i=0;i<6;i++){this.path.push(this.oneStepToLeft)}
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToTop);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToRight);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToBottom);
+                this.path.push(this.oneStepTowards315);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToRight);
+                this.path.push(this.oneStepToBottom);
+                for (let i = 0; i < 6; i++) this.path.push(this.oneStepToLeft);
                 break;
             case '3':
-                for(let i=0;i<4;i++){this.path.push(this.oneStepToTop)}
-                this.path.push(this.oneStepTowards135)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToLeft)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToTop)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToRight)}
+                for (let i = 0; i < 4; i++) this.path.push(this.oneStepToTop);
+                this.path.push(this.oneStepTowards135);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToLeft);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToTop);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToRight);
                 this.path.push(this.oneStepTowards45);
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToTop)}
-                for(let i=0;i<2;i++){this.path.push(this.oneStepToRight)}
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToBottom)}
-                this.path.push(this.oneStepTowards315)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToRight)}
-                for(let i=0;i<2;i++)this.path.push(this.oneStepToBottom)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToLeft)}
-                this.path.push(this.oneStepTowards225)
-                for(let i=0;i<5;i++){this.path.push(this.oneStepToBottom)}
-                this.path.push(this.oneStepToLeft)
-                for(let i=0;i<6;i++){this.path.push(this.oneStepToTop)}
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToTop);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToRight);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToBottom);
+                this.path.push(this.oneStepTowards315);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToRight);
+                for (let i = 0; i < 2; i++) this.path.push(this.oneStepToBottom);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToLeft);
+                this.path.push(this.oneStepTowards225);
+                for (let i = 0; i < 5; i++) this.path.push(this.oneStepToBottom);
+                this.path.push(this.oneStepToLeft);
+                for (let i = 0; i < 6; i++) this.path.push(this.oneStepToTop);
                 break;
         }
     }
 
-    draw(){ ctx.drawImage(this.image, this.x, this.y, 50, 50); }
+    draw() { ctx.drawImage(this.image, this.x, this.y, 50, 50); }
 
-    update(num){
-        if(this.pos != -1 && this.pos + num <= 56){
-            for(let i=this.pos; i<this.pos+num; i++) this.path[i](this.color_id, this.Pid);
+    update(num) {
+        if (this.pos !== -1 && this.pos + num <= 56) {
+            for (let i = this.pos; i < this.pos + num; i++) this.path[i](this.color_id, this.Pid);
             this.pos += num;
-            if(this.pos == 56) window.PLAYERS[this.color_id].won += 1;
-        } else if(num == 6 && this.pos == -1){
-            this.x = homeTilePos[this.color_id][0].x;
-            this.y = homeTilePos[this.color_id][0].y;
+            if (this.pos === 56) window.PLAYERS[this.color_id].won += 1;
+        } else if (num === 6 && this.pos === -1) {
+            this.x   = homeTilePos[this.color_id][0].x;
+            this.y   = homeTilePos[this.color_id][0].y;
             this.pos = 0;
         }
     }
 
-    oneStepToRight(id,pid) { window.PLAYERS[id].myPieces[pid].x += 50; }
-    oneStepToLeft(id,pid)  { window.PLAYERS[id].myPieces[pid].x -= 50; }
-    oneStepToTop(id,pid)   { window.PLAYERS[id].myPieces[pid].y -= 50; }
-    oneStepToBottom(id,pid){ window.PLAYERS[id].myPieces[pid].y += 50; }
-    oneStepTowards45(id,pid) { window.PLAYERS[id].myPieces[pid].x += 50; window.PLAYERS[id].myPieces[pid].y -= 50; }
-    oneStepTowards135(id,pid){ window.PLAYERS[id].myPieces[pid].x -= 50; window.PLAYERS[id].myPieces[pid].y -= 50; }
-    oneStepTowards225(id,pid){ window.PLAYERS[id].myPieces[pid].x -= 50; window.PLAYERS[id].myPieces[pid].y += 50; }
-    oneStepTowards315(id,pid){ window.PLAYERS[id].myPieces[pid].x += 50; window.PLAYERS[id].myPieces[pid].y += 50; }
+    oneStepToRight(id, pid)  { window.PLAYERS[id].myPieces[pid].x += 50; }
+    oneStepToLeft(id, pid)   { window.PLAYERS[id].myPieces[pid].x -= 50; }
+    oneStepToTop(id, pid)    { window.PLAYERS[id].myPieces[pid].y -= 50; }
+    oneStepToBottom(id, pid) { window.PLAYERS[id].myPieces[pid].y += 50; }
+    oneStepTowards45(id, pid)  { window.PLAYERS[id].myPieces[pid].x += 50; window.PLAYERS[id].myPieces[pid].y -= 50; }
+    oneStepTowards135(id, pid) { window.PLAYERS[id].myPieces[pid].x -= 50; window.PLAYERS[id].myPieces[pid].y -= 50; }
+    oneStepTowards225(id, pid) { window.PLAYERS[id].myPieces[pid].x -= 50; window.PLAYERS[id].myPieces[pid].y += 50; }
+    oneStepTowards315(id, pid) { window.PLAYERS[id].myPieces[pid].x += 50; window.PLAYERS[id].myPieces[pid].y += 50; }
 
-    kill(){
-        this.x = allPiecesePos[this.color_id][this.Pid].x;
-        this.y = allPiecesePos[this.color_id][this.Pid].y;
+    kill() {
+        this.x   = allPiecesePos[this.color_id][this.Pid].x;
+        this.y   = allPiecesePos[this.color_id][this.Pid].y;
         this.pos = -1;
     }
 }
 
-// ── Game init ──
+// ── Game start ──
 
-document.addEventListener('touchstart', function unlockAudio(){
-    if(window.LudoSound) LudoSound.unlock();
-    document.removeEventListener('touchstart', unlockAudio);
-}, {once: true});
-
-function startOffline(numPlayers){
+function startOffline(numPlayers) {
     totalPlayers = numPlayers;
     MYROOM = [];
-    for(let i=0;i<numPlayers;i++) MYROOM.push(i);
+    for (let i = 0; i < numPlayers; i++) MYROOM.push(i);
     document.getElementById('player-select-modal').style.display = 'none';
     loadAllPieces();
 }
 
-function loadAllPieces(){
+function loadAllPieces() {
     let cnt = 0;
-    for(let i=0;i<COLORS.length;i++){
+    for (let i = 0; i < COLORS.length; i++) {
         let img = new Image();
         img.src = '../images/pieces/' + COLORS[i] + '.png';
         img.onload = () => {
-            ++cnt;
-            if(cnt >= COLORS.length){
-                for(let j=0;j<MYROOM.length;j++) PLAYERS[MYROOM[j]] = new Player(MYROOM[j]);
+            if (++cnt >= COLORS.length) {
+                for (let j = 0; j < MYROOM.length; j++) PLAYERS[MYROOM[j]] = new Player(MYROOM[j]);
                 chance = MYROOM[0];
                 allPlayerHandler();
                 activateChance(chance);
-                for(let i=0;i<4;i++){
-                    let cd = document.getElementById('dice-' + i);
-                    if(cd){
-                        cd.addEventListener('click', function(){
-                            if(_diceJustTouched){ _diceJustTouched = false; return; }
-                            if(this.classList.contains('disabled')) return;
-                            if(Number(this.dataset.pid) !== chance) return;
-                            if(window.LudoSound) LudoSound.unlock();
-                            offlineDiceAction();
-                        });
-                        // touch پر dice
-                        cd.addEventListener('touchstart', function(e){
+
+                // ── ہر dice کا touch اور click ──
+                for (let i = 0; i < 4; i++) {
+                    (function (pid) {
+                        var d = document.getElementById('dice-' + pid);
+                        if (!d) return;
+                        d.dataset.pid = pid;
+
+                        // touch
+                        d.addEventListener('touchstart', function (e) {
                             e.preventDefault();
                             e.stopPropagation();
-                            if(this.classList.contains('disabled')) return;
-                            if(Number(this.dataset.pid) !== chance) return;
-                            if(window.LudoSound) LudoSound.unlock();
-                            _diceJustTouched = true;
-                            offlineDiceAction();
-                        }, {passive: false});
-                        cd.dataset.pid = i;
-                    }
+                            if (this.classList.contains('disabled')) return;
+                            if (pid !== chance) return;
+                            if (window.LudoSound) LudoSound.unlock();
+                            rollAndWait();
+                        }, { passive: false });
+
+                        // click (desktop)
+                        d.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            if (this.classList.contains('disabled')) return;
+                            if (pid !== chance) return;
+                            rollAndWait();
+                        });
+                    })(i);
                 }
+
                 outputMessage('🎮 گیم شروع! ' + USERNAMES[chance] + ' پہلے کھیلے گا', 'server');
             }
         };
@@ -302,99 +292,101 @@ function loadAllPieces(){
     }
 }
 
-// ── Dice ──
+// ── Dice roll ──
 
-function rollDice(){ return Math.floor(Math.random() * 6) + 1; }
+function rollAndWait() {
+    if (_waiting) return;
 
-function offlineDiceAction(){
-    if(waitingForPieceClick) return;
-
-    let num = rollDice();
-    if(window.LudoSound) LudoSound.dice();
+    var num = Math.floor(Math.random() * 6) + 1;
+    if (window.LudoSound) LudoSound.dice();
     updateDiceUI(chance, num);
     outputMessage(USERNAMES[chance] + ' کو ' + num + ' آیا! 🎲', chance);
 
-    let spirit = [];
-    for(let i=0;i<4;i++){
-        let piece = PLAYERS[chance].myPieces[i];
-        if(piece.pos > -1 && piece.pos + num <= 56) spirit.push(i);
-        else if(piece.pos === -1 && num === 6)       spirit.push(i);
+    // چل سکنے والی گوٹیاں
+    var spirit = [];
+    for (var i = 0; i < 4; i++) {
+        var p = PLAYERS[chance].myPieces[i];
+        if (p.pos === -1 && num === 6)          spirit.push(i);
+        else if (p.pos > -1 && p.pos + num <= 56) spirit.push(i);
     }
 
-    if(spirit.length === 0){
+    if (spirit.length === 0) {
         outputMessage('کوئی گوٹی نہیں چل سکتی!', 'server');
-        setTimeout(() => nextTurn(num), 800);
+        setTimeout(function () { nextTurn(num); }, 800);
         return;
     }
 
-    // pending state save کرو
-    _pendingNum    = num;
-    _pendingSpirit = spirit;
-    waitingForPieceClick  = true;
-    outputMessage('✋ ' + USERNAMES[chance] + ' — اپنی گوٹی چھوئیں', 'server');
+    _num    = num;
+    _spirit = spirit;
+    _waiting = true;
+    outputMessage('✋ ' + USERNAMES[chance] + ' — گوٹی چھوئیں', 'server');
 }
 
-// ── Turn management ──
+// ── Turn ──
 
-function nextTurn(lastNum){
+function nextTurn(lastNum) {
     deactivateAll();
-    if(lastNum === 6){
-        if(window.LudoSound) LudoSound.six();
+    if (lastNum === 6) {
+        if (window.LudoSound) LudoSound.six();
         outputMessage(USERNAMES[chance] + ' کو چھکا — دوبارہ باری! 🎉', 'server');
         activateChance(chance);
     } else {
-        let idx    = MYROOM.indexOf(chance);
-        let nextId = MYROOM[(idx + 1) % MYROOM.length];
+        var idx    = MYROOM.indexOf(chance);
+        var nextId = MYROOM[(idx + 1) % MYROOM.length];
         chance = nextId;
         activateChance(nextId);
         outputMessage('👉 ' + USERNAMES[nextId] + ' کی باری!', nextId);
     }
 }
 
-function activateChance(id){
-    chance = id;
-    waitingForPieceClick  = false;
-    _pendingNum    = undefined;
-    _pendingSpirit = undefined;
+function activateChance(id) {
+    chance   = id;
+    _waiting = false;
+    _num     = undefined;
+    _spirit  = undefined;
     deactivateAll();
-    let corner = document.getElementById('corner-' + id);
-    let dice   = document.getElementById('dice-'   + id);
-    let cmsg   = document.getElementById('cmsg-'   + id);
-    if(corner) corner.classList.add('my-turn');
-    if(dice)  { dice.classList.remove('disabled'); dice.classList.add('active'); }
-    if(cmsg)   cmsg.textContent = '⚡ آپ کی باری!';
+    var corner = document.getElementById('corner-' + id);
+    var dice   = document.getElementById('dice-'   + id);
+    var cmsg   = document.getElementById('cmsg-'   + id);
+    if (corner) corner.classList.add('my-turn');
+    if (dice)  { dice.classList.remove('disabled'); dice.classList.add('active'); }
+    if (cmsg)   cmsg.textContent = '⚡ آپ کی باری!';
 }
 
-function deactivateAll(){
-    for(let i=0;i<4;i++){
-        let c = document.getElementById('corner-' + i);
-        let d = document.getElementById('dice-'   + i);
-        let m = document.getElementById('cmsg-'   + i);
-        if(c) c.classList.remove('my-turn');
-        if(d){ d.classList.add('disabled'); d.classList.remove('active'); }
-        if(m) m.textContent = 'Waiting...';
+function deactivateAll() {
+    for (var i = 0; i < 4; i++) {
+        var c = document.getElementById('corner-' + i);
+        var d = document.getElementById('dice-'   + i);
+        var m = document.getElementById('cmsg-'   + i);
+        if (c) c.classList.remove('my-turn');
+        if (d) { d.classList.add('disabled'); d.classList.remove('active'); }
+        if (m) m.textContent = 'Waiting...';
     }
 }
 
-function showWin(id){
+// ── Win ──
+
+function showWin(id) {
     deactivateAll();
-    if(window.LudoSound) LudoSound.win();
-    let modal = document.getElementById('win-modal');
+    if (window.LudoSound) LudoSound.win();
+    var modal = document.getElementById('win-modal');
     document.getElementById('win-text').innerHTML = PASS_ICONS[id] + ' ' + USERNAMES[id] + ' جیت گیا! 🏆';
     document.getElementById('win-text').style.color = COLOR_HEX[id];
     modal.style.display = 'block';
 }
 
-function iKill(id, pid){
-    let boss = PLAYERS[id].myPieces[pid];
-    for(let i=0;i<MYROOM.length;i++){
-        for(let j=0;j<4;j++){
-            if(MYROOM[i] != id &&
-               boss.x == PLAYERS[MYROOM[i]].myPieces[j].x &&
-               boss.y == PLAYERS[MYROOM[i]].myPieces[j].y){
-                if(!inAhomeTile(id, pid)){
+// ── Kill ──
+
+function iKill(id, pid) {
+    var boss = PLAYERS[id].myPieces[pid];
+    for (var i = 0; i < MYROOM.length; i++) {
+        for (var j = 0; j < 4; j++) {
+            if (MYROOM[i] != id &&
+                boss.x === PLAYERS[MYROOM[i]].myPieces[j].x &&
+                boss.y === PLAYERS[MYROOM[i]].myPieces[j].y) {
+                if (!inAhomeTile(id, pid)) {
                     PLAYERS[MYROOM[i]].myPieces[j].kill();
-                    if(window.LudoSound) LudoSound.kill();
+                    if (window.LudoSound) LudoSound.kill();
                     outputMessage('💀 ' + USERNAMES[id] + ' نے ' + USERNAMES[MYROOM[i]] + ' کی گوٹی ماری!', 'server');
                     return 1;
                 }
@@ -404,41 +396,39 @@ function iKill(id, pid){
     return 0;
 }
 
-function inAhomeTile(id, pid){
-    for(let i=0;i<4;i++){
-        if((PLAYERS[id].myPieces[pid].x == homeTilePos[i][0].x &&
-            PLAYERS[id].myPieces[pid].y == homeTilePos[i][0].y) ||
-           (PLAYERS[id].myPieces[pid].x == homeTilePos[i][1].x &&
-            PLAYERS[id].myPieces[pid].y == homeTilePos[i][1].y)){
+function inAhomeTile(id, pid) {
+    for (var i = 0; i < 4; i++) {
+        if ((PLAYERS[id].myPieces[pid].x === homeTilePos[i][0].x && PLAYERS[id].myPieces[pid].y === homeTilePos[i][0].y) ||
+            (PLAYERS[id].myPieces[pid].x === homeTilePos[i][1].x && PLAYERS[id].myPieces[pid].y === homeTilePos[i][1].y)) {
             return true;
         }
     }
     return false;
 }
 
-function allPlayerHandler(){
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for(let i=0;i<MYROOM.length;i++) PLAYERS[MYROOM[i]].draw();
+function allPlayerHandler() {
+    ctx.clearRect(0, 0, 750, 750);
+    for (var i = 0; i < MYROOM.length; i++) PLAYERS[MYROOM[i]].draw();
 }
 
-function updateDiceUI(id, num){
-    let d = document.getElementById('dice-' + id);
-    if(d){
+function updateDiceUI(id, num) {
+    var d = document.getElementById('dice-' + id);
+    if (d) {
         d.classList.add('rolling');
-        setTimeout(()=>{ d.setAttribute('data-num', num); d.classList.remove('rolling'); }, 500);
+        setTimeout(function () { d.setAttribute('data-num', num); d.classList.remove('rolling'); }, 500);
     }
-    setTimeout(()=>{
-        let m = document.getElementById('cmsg-' + id);
-        if(m) m.textContent = '🎲 ' + num + ' آیا!';
+    setTimeout(function () {
+        var m = document.getElementById('cmsg-' + id);
+        if (m) m.textContent = '🎲 ' + num + ' آیا!';
     }, 500);
 }
 
-function outputMessage(msg, who){
-    let board = document.querySelector('.msgBoard');
-    let div   = document.createElement('div');
+function outputMessage(msg, who) {
+    var board = document.querySelector('.msgBoard');
+    var div   = document.createElement('div');
     div.classList.add(who === 'server' ? 'messageFromServer' : 'message');
-    let color = (typeof who === 'number') ? COLOR_HEX[who] : '#aaa';
-    div.innerHTML = '<p style="text-shadow: 0 0 6px ' + color + '">' + msg + '</p>';
+    var color = (typeof who === 'number') ? COLOR_HEX[who] : '#aaa';
+    div.innerHTML = '<p style="text-shadow:0 0 6px ' + color + '">' + msg + '</p>';
     board.appendChild(div);
     board.scrollTop = board.scrollHeight;
 }
