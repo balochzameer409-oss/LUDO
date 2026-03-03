@@ -10,7 +10,7 @@ const PASS_ICONS = ['🟢','🔴','🔵','🟡'];
 
 let MYROOM  = [];
 let chance  = 0;
-var PLAYERS = {}; // var — window.PLAYERS کے لیے ضروری
+let PLAYERS = {};
 let totalPlayers = 4;
 
 // pending state — module scope میں
@@ -212,7 +212,7 @@ class Piece {
         if (this.pos !== -1 && this.pos + num <= 56) {
             for (let i = this.pos; i < this.pos + num; i++) this.path[i](this.color_id, this.Pid);
             this.pos += num;
-            if (this.pos === 56) window.PLAYERS[this.color_id].won += 1;
+            if (this.pos === 56) PLAYERS[this.color_id].won += 1;
         } else if (num === 6 && this.pos === -1) {
             this.x   = homeTilePos[this.color_id][0].x;
             this.y   = homeTilePos[this.color_id][0].y;
@@ -220,14 +220,14 @@ class Piece {
         }
     }
 
-    oneStepToRight(id, pid)  { window.PLAYERS[id].myPieces[pid].x += 50; }
-    oneStepToLeft(id, pid)   { window.PLAYERS[id].myPieces[pid].x -= 50; }
-    oneStepToTop(id, pid)    { window.PLAYERS[id].myPieces[pid].y -= 50; }
-    oneStepToBottom(id, pid) { window.PLAYERS[id].myPieces[pid].y += 50; }
-    oneStepTowards45(id, pid)  { window.PLAYERS[id].myPieces[pid].x += 50; window.PLAYERS[id].myPieces[pid].y -= 50; }
-    oneStepTowards135(id, pid) { window.PLAYERS[id].myPieces[pid].x -= 50; window.PLAYERS[id].myPieces[pid].y -= 50; }
-    oneStepTowards225(id, pid) { window.PLAYERS[id].myPieces[pid].x -= 50; window.PLAYERS[id].myPieces[pid].y += 50; }
-    oneStepTowards315(id, pid) { window.PLAYERS[id].myPieces[pid].x += 50; window.PLAYERS[id].myPieces[pid].y += 50; }
+    oneStepToRight(id, pid)  { PLAYERS[id].myPieces[pid].x += 50; }
+    oneStepToLeft(id, pid)   { PLAYERS[id].myPieces[pid].x -= 50; }
+    oneStepToTop(id, pid)    { PLAYERS[id].myPieces[pid].y -= 50; }
+    oneStepToBottom(id, pid) { PLAYERS[id].myPieces[pid].y += 50; }
+    oneStepTowards45(id, pid)  { PLAYERS[id].myPieces[pid].x += 50; PLAYERS[id].myPieces[pid].y -= 50; }
+    oneStepTowards135(id, pid) { PLAYERS[id].myPieces[pid].x -= 50; PLAYERS[id].myPieces[pid].y -= 50; }
+    oneStepTowards225(id, pid) { PLAYERS[id].myPieces[pid].x -= 50; PLAYERS[id].myPieces[pid].y += 50; }
+    oneStepTowards315(id, pid) { PLAYERS[id].myPieces[pid].x += 50; PLAYERS[id].myPieces[pid].y += 50; }
 
     kill() {
         this.x   = allPiecesePos[this.color_id][this.Pid].x;
