@@ -262,7 +262,7 @@ function offlineDiceAction(){
     waitingForPieceClick = true;
     outputMessage('گوٹی کو چھوئیں', 'server');
 
-    waitingForPieceClick = true;
+    
 }
 
 // ── مرکزی input handler — touch اور mouse دونوں یہاں آتے ہیں ──
