@@ -1,54 +1,35 @@
 // =====================================================
-// LUDO OFFLINE MODE - ایک موبائل پر باری باری کھیلو
+// LUDO OFFLINE MODE
+// click handling بالکل online ludo.js جیسا
 // =====================================================
 
-const USERNAMES = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
-const COLORS    = ['green', 'red', 'blue', 'yellow'];
-const COLOR_HEX = ['#27ae60', '#e74c3c', '#2980b9', '#f1c40f'];
-const PIECES    = [];
+const USERNAMES  = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
+const COLORS     = ['green', 'red', 'blue', 'yellow'];
+const COLOR_HEX  = ['#27ae60', '#e74c3c', '#2980b9', '#f1c40f'];
+const PIECES     = [];
 const PASS_ICONS = ['🟢','🔴','🔵','🟡'];
 
-let MYROOM   = [];
-let chance   = 0;
-let PLAYERS  = {};
+let MYROOM  = [];
+let chance  = 0;
+let PLAYERS = {};
 let waitingForPieceClick = false;
 let totalPlayers = 4;
-
-// pending state — یہ canvas پر نہیں، الگ variables میں رکھتے ہیں
-let pendingNum    = undefined;
-let pendingSpirit = undefined;
 
 var canvas = document.getElementById('theCanvas');
 var ctx    = canvas.getContext('2d');
 canvas.height = 750;
 canvas.width  = 750;
 
-// ── FIX: Touch کو صحیح canvas coordinates میں بدلو ──
-function getScaledCoords(clientX, clientY){
-    let rect   = canvas.getBoundingClientRect();
-    let scaleX = canvas.width  / rect.width;
-    let scaleY = canvas.height / rect.height;
-    return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top)  * scaleY
-    };
-}
-
-// Touch handler
+// ── Online جیسا: touch کو click میں بدلو ──
 canvas.addEventListener('touchstart', function(e){
     e.preventDefault();
-    let touch  = e.touches[0];
-    let coords = getScaledCoords(touch.clientX, touch.clientY);
-    canvas._justTouched = true;
-    handleCanvasInput(coords.x, coords.y);
+    let touch = e.touches[0];
+    let mouseEvent = new MouseEvent('click', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
 }, {passive: false});
-
-// Desktop mouse click
-canvas.addEventListener('click', function(e){
-    if(canvas._justTouched){ canvas._justTouched = false; return; }
-    let coords = getScaledCoords(e.clientX, e.clientY);
-    handleCanvasInput(coords.x, coords.y);
-});
 
 let allPiecesePos = {
     0:[{x: 50,y:125},{x:125,y: 50},{x:200,y:125},{x:125,y:200}],
@@ -227,7 +208,7 @@ function loadAllPieces(){
                         cd.addEventListener('click', function(){
                             if(this.classList.contains('disabled')) return;
                             if(Number(this.dataset.pid) !== chance) return;
-                            if(window.LudoSound){ LudoSound.unlock(); }
+                            if(window.LudoSound) LudoSound.unlock();
                             offlineDiceAction();
                         });
                         cd.dataset.pid = i;
@@ -252,12 +233,11 @@ function offlineDiceAction(){
     updateDiceUI(chance, num);
     outputMessage(USERNAMES[chance] + ' کو ' + num + ' آیا! 🎲', chance);
 
-    // وہ گوٹیاں جو چل سکتی ہیں
     let spirit = [];
     for(let i=0;i<4;i++){
         let piece = PLAYERS[chance].myPieces[i];
-        if(piece.pos === -1 && num === 6)          spirit.push(i);
-        else if(piece.pos > -1 && piece.pos + num <= 56) spirit.push(i);
+        if(piece.pos > -1 && piece.pos + num <= 56) spirit.push(i);
+        else if(piece.pos === -1 && num === 6)       spirit.push(i);
     }
 
     if(spirit.length === 0){
@@ -266,56 +246,57 @@ function offlineDiceAction(){
         return;
     }
 
-    // ── FIX: pending state صحیح جگہ save کرو ──
-    pendingNum    = num;
-    pendingSpirit = spirit;
+    // ── بالکل online جیسا: نیا named clickHandler لگاؤ ──
     waitingForPieceClick = true;
     outputMessage('گوٹی کو چھوئیں', 'server');
-}
 
-// ── مرکزی input handler ──
-function handleCanvasInput(Xp, Yp){
-    if(!waitingForPieceClick) return;
-    if(pendingNum === undefined || pendingSpirit === undefined) return;
+    canvas.addEventListener('click', function clickHandler(e){
+        let rect   = canvas.getBoundingClientRect();
+        let scaleX = canvas.width  / rect.width;
+        let scaleY = canvas.height / rect.height;
+        let Xp = (e.clientX - rect.left) * scaleX;
+        let Yp = (e.clientY - rect.top)  * scaleY;
 
-    let num    = pendingNum;
-    let spirit = pendingSpirit;
+        let clickedAny = false;
 
-    for(let i=0;i<4;i++){
-        let px = PLAYERS[chance].myPieces[i].x;
-        let py = PLAYERS[chance].myPieces[i].y;
+        for(let i=0;i<4;i++){
+            let px = PLAYERS[chance].myPieces[i].x;
+            let py = PLAYERS[chance].myPieces[i].y;
 
-        // piece 50x50 ہے، تھوڑا margin رکھو
-        if(Xp >= px - 5 && Xp <= px + 55 && Yp >= py - 5 && Yp <= py + 55){
-            let piece = PLAYERS[chance].myPieces[i];
-            let canMove = spirit.includes(i) && (
-                (piece.pos === -1 && num === 6) ||
-                (piece.pos > -1  && piece.pos + num <= 56)
-            );
-            if(canMove){
-                // ── state صاف کرو ──
-                waitingForPieceClick = false;
-                pendingNum    = undefined;
-                pendingSpirit = undefined;
+            // ── بالکل online جیسا: 0 سے 45 range ──
+            if(Xp - px < 45 && Xp - px > 0 && Yp - py < 45 && Yp - py > 0){
+                clickedAny = true;
+                let piece = PLAYERS[chance].myPieces[i];
+                let canMove = spirit.includes(i) && (
+                    (piece.pos === -1 && num === 6) ||
+                    (piece.pos > -1  && piece.pos + num <= 56)
+                );
 
-                PLAYERS[chance].myPieces[i].update(num);
-                if(window.LudoSound) LudoSound.move();
-                iKill(chance, i);
-                allPlayerHandler();
+                if(canMove){
+                    canvas.removeEventListener('click', clickHandler);
+                    waitingForPieceClick = false;
 
-                if(PLAYERS[chance].didIwin()){
-                    showWin(chance);
-                    return;
+                    PLAYERS[chance].myPieces[i].update(num);
+                    if(window.LudoSound) LudoSound.move();
+                    iKill(chance, i);
+                    allPlayerHandler();
+
+                    if(PLAYERS[chance].didIwin()){
+                        showWin(chance);
+                        return;
+                    }
+                    setTimeout(() => nextTurn(num), 400);
+                } else {
+                    outputMessage('یہ گوٹی نہیں چل سکتی!', 'server');
                 }
-                setTimeout(() => nextTurn(num), 400);
-                return;
-            } else {
-                outputMessage('یہ گوٹی نہیں چل سکتی!', 'server');
                 return;
             }
         }
-    }
-    outputMessage('اپنے رنگ کی گوٹی کو چھوئیں', 'server');
+
+        if(!clickedAny){
+            outputMessage('اپنے رنگ کی گوٹی کو چھوئیں', 'server');
+        }
+    });
 }
 
 // ── Turn management ──
@@ -337,10 +318,7 @@ function nextTurn(lastNum){
 
 function activateChance(id){
     chance = id;
-    // ── FIX: نئی باری پر pending state ہمیشہ reset ──
     waitingForPieceClick = false;
-    pendingNum    = undefined;
-    pendingSpirit = undefined;
     deactivateAll();
     let corner = document.getElementById('corner-' + id);
     let dice   = document.getElementById('dice-'   + id);
@@ -361,8 +339,6 @@ function deactivateAll(){
     }
 }
 
-// ── Win ──
-
 function showWin(id){
     deactivateAll();
     if(window.LudoSound) LudoSound.win();
@@ -371,8 +347,6 @@ function showWin(id){
     document.getElementById('win-text').style.color = COLOR_HEX[id];
     modal.style.display = 'block';
 }
-
-// ── Kill ──
 
 function iKill(id, pid){
     let boss = PLAYERS[id].myPieces[pid];
