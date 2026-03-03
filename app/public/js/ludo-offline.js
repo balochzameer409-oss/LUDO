@@ -10,7 +10,7 @@ const PASS_ICONS = ['🟢','🔴','🔵','🟡'];
 
 let MYROOM  = [];
 let chance  = 0;
-let PLAYERS = {};
+var PLAYERS = {}; // var — window.PLAYERS کے لیے ضروری
 let totalPlayers = 4;
 
 // pending state — module scope میں
