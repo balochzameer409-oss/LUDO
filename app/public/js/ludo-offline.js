@@ -15,6 +15,17 @@ var ctx    = canvas.getContext('2d');
 canvas.height = 750;
 canvas.width  = 750;
 
+// board کی actual CSS size کے ساتھ canvas کو sync کرو
+function resizeCanvas(){
+    let board = document.querySelector('.gameBoard');
+    if(!board) return;
+    let size = board.getBoundingClientRect().width;
+    canvas.style.width  = size + 'px';
+    canvas.style.height = size + 'px';
+}
+resizeCanvas();
+window.addEventListener('resize', () => { resizeCanvas(); allPlayerHandler(); });
+
 // Touch handler
 canvas.addEventListener('touchstart', function(e){
     e.preventDefault();
