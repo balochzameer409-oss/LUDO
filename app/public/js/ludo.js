@@ -1,6 +1,6 @@
 let socket = io(window.location.href.substring(0,window.location.href.length-7));
 
-const room_code = window.location.href.substring(window.location.href.length-8)
+const room_code = window.location.href.substring(window.location.href.length-6)
 const USERNAMES = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
 const PIECES = [];
 const colors = ["green","red","blue","yellow"];
