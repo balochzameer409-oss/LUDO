@@ -326,12 +326,24 @@ socket.on('connect',function(){
 
     socket.on('Thrown-dice',async function(data){
         console.log(data);
-        await PLAYERS[data.id].myPieces[data.pid].update(data.num);
-        if(iKill(data.id,data.pid)){
-            outputMessage({msg:'Oops got killed',id:data.id},5);
+        if(Number(data.id) !== myid){
+            // دوسرے player کی گوٹی — سیدھا x,y,pos set کرو
+            PLAYERS[data.id].myPieces[data.pid].x   = data.x;
+            PLAYERS[data.id].myPieces[data.pid].y   = data.y;
+            PLAYERS[data.id].myPieces[data.pid].pos = data.pos;
+            if(iKill(data.id,data.pid)){
+                outputMessage({msg:'Oops got killed',id:data.id},5);
+            }
             allPlayerHandler();
-        }else{
-            allPlayerHandler();
+        } else {
+            // اپنی گوٹی — پہلے جیسے update چلاؤ
+            await PLAYERS[data.id].myPieces[data.pid].update(data.num);
+            if(iKill(data.id,data.pid)){
+                outputMessage({msg:'Oops got killed',id:data.id},5);
+                allPlayerHandler();
+            }else{
+                allPlayerHandler();
+            }
         }
         if(PLAYERS[data.id].didIwin()){
             socket.emit('WON',{
@@ -503,6 +515,9 @@ function diceAction(){
                         );
                         if(canMove){
                             playerObj['pid'] = i;
+                            playerObj['pos'] = PLAYERS[myid].myPieces[i].pos;
+                            playerObj['x']   = PLAYERS[myid].myPieces[i].x;
+                            playerObj['y']   = PLAYERS[myid].myPieces[i].y;
                             console.log(playerObj);
                             socket.emit('random',playerObj, function(data){
                                 styleButton(0);
