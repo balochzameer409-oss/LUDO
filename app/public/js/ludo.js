@@ -1,6 +1,6 @@
 let socket = io(window.location.href.substring(0,window.location.href.length-7));
 
-const room_code = window.location.href.substring(window.location.href.length-6);
+const room_code = window.location.href.substring(window.location.href.length-6)
 const USERNAMES = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
 const PIECES = [];
 const colors = ["green","red","blue","yellow"];
@@ -8,11 +8,23 @@ let MYROOM = [];
 let myid = -1;
 let chance = Number(-1);
 var PLAYERS = {};
+let waitingForPieceClick = false; // FIX: multiple listeners سے بچاؤ
 
 var canvas = document.getElementById('theCanvas');
 var ctx = canvas.getContext('2d');
 canvas.height = 750;
 canvas.width = 750;
+
+// موبائل touch support - touch کو click میں بدلیں
+canvas.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    let touch = e.touches[0];
+    let mouseEvent = new MouseEvent('click', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+}, {passive: false});
 
 let allPiecesePos = {
     0:[{x: 50,y:125},{x:125,y: 50},{x:200,y:125},{x:125,y:200}],
@@ -229,6 +241,7 @@ socket.on('connect',function(){
     if(chance === myid){    
         document.querySelector('#randomButt').addEventListener('click',function(event){
         event.preventDefault();
+        if(this.classList.contains('disabled')) return;
         console.log('19/6/21 randomButt clicked');
         styleButton(0);
         diceAction();
@@ -238,11 +251,29 @@ socket.on('connect',function(){
     socket.on('imposter',()=>{window.location.replace("/error-imposter");});
 
     socket.on('is-it-your-chance',function(data){
-        if(data===myid){
+        waitingForPieceClick = false; // نئی باری - پرانی listener reset
+        chance = Number(data); // پہلے chance update کرو
+        if(Number(data) === Number(myid)){
             styleButton(1);
-            outputMessage({Name:'your',id:data},4)
-        }else{outputMessage({Name:USERNAMES[data]+"'s",id:data},4)}
-        chance = Number(data);
+            outputMessage({Name:'your',id:Number(data)},4)
+        }else{
+            outputMessage({Name:USERNAMES[data]+"'s",id:data},4);
+            // highlight other player corner
+            for(let i=0;i<4;i++){
+                let c=document.getElementById('corner-'+i);
+                let d=document.getElementById('dice-'+i);
+                let m=document.getElementById('cmsg-'+i);
+                if(i===Number(data)){
+                    if(c) c.classList.add('my-turn');
+                    if(d){d.classList.remove('disabled');d.classList.add('active');}
+                    if(m) m.textContent='⚡ باری!';
+                } else {
+                    if(c) c.classList.remove('my-turn');
+                    if(d){d.classList.add('disabled');d.classList.remove('active');}
+                    if(m) m.textContent='Waiting...';
+                }
+            }
+        }
         window.localStorage.setItem('chance',chance.toString());
     });
 
@@ -279,16 +310,37 @@ socket.on('connect',function(){
 
     socket.on('rolled-dice',function(data){
         Number(data.id) != myid?outputMessage({Name:USERNAMES[data.id],Num:data.num,id:data.id},1):outputMessage({Name: 'you', Num:data.num, id:data.id},1);
+        if(data.num !== undefined){
+            let od = document.getElementById('dice-' + data.id);
+            if(od){
+                od.classList.add('rolling');
+                setTimeout(()=>{
+                    od.setAttribute('data-num', data.num);
+                    od.classList.remove('rolling');
+                    let cm = document.getElementById('cmsg-' + data.id);
+                    if(cm) cm.textContent = '🎲 ' + data.num + ' آیا!';
+                }, 500);
+            }
+        }
     });
 
     socket.on('Thrown-dice',async function(data){
         console.log(data);
-        await PLAYERS[data.id].myPieces[data.pid].update(data.num);
-        if(iKill(data.id,data.pid)){
-            outputMessage({msg:'Oops got killed',id:data.id},5);
+        if(Number(data.id) !== myid){
+            // دوسرے player کی گوٹی — سیدھا x,y,pos set کرو
+            PLAYERS[data.id].myPieces[data.pid].x   = data.x;
+            PLAYERS[data.id].myPieces[data.pid].y   = data.y;
+            PLAYERS[data.id].myPieces[data.pid].pos = data.pos;
+            if(iKill(data.id,data.pid)){
+                outputMessage({msg:'Oops got killed',id:data.id},5);
+            }
             allPlayerHandler();
-        }else{
-            allPlayerHandler();
+        } else {
+            // اپنی گوٹی — پہلے ہی چل چکی ہے، صرف kill check کرو
+            if(iKill(data.id,data.pid)){
+                outputMessage({msg:'Oops got killed',id:data.id},5);
+                allPlayerHandler();
+            }
         }
         if(PLAYERS[data.id].didIwin()){
             socket.emit('WON',{
@@ -358,18 +410,59 @@ function outputMessage(anObject,k){
 
 //button disabling-enabling
 function styleButton(k){
+    // hidden original (kept for compatibility)
     let butt = document.getElementById("randomButt")
     if(k===0){
-        butt.disabled = true;
-        butt.style.opacity =  0.6;
-        butt.style.cursor = "not-allowed"
-        butt.style.backgroundImage = "linear-gradient(to bottom right, red, yellow)"
+        butt.classList.add('disabled');
+        butt.classList.remove('active');
+        // corner dice: disable MY corner
+        let myCorner = document.getElementById('corner-' + myid);
+        let myDice   = document.getElementById('dice-'   + myid);
+        let myCmsg   = document.getElementById('cmsg-'   + myid);
+        if(myCorner) myCorner.classList.remove('my-turn');
+        if(myDice)  { myDice.classList.add('disabled'); myDice.classList.remove('active'); }
+        if(myCmsg)   myCmsg.textContent = 'Waiting...';
     }
     else if(k===1){
-        butt.disabled = false;
-        butt.style.opacity = 1;
-        butt.style.cursor = "pointer";
-        butt.style.backgroundImage = "linear-gradient(to bottom right, red, yellow)"
+        butt.classList.remove('disabled');
+        butt.classList.add('active');
+        // corner dice: activate MY corner, deactivate rest
+        for(let i=0;i<4;i++){
+            let c = document.getElementById('corner-' + i);
+            let d = document.getElementById('dice-'   + i);
+            let m = document.getElementById('cmsg-'   + i);
+            if(i === myid){
+                if(c) c.classList.add('my-turn');
+                if(d){ d.classList.remove('disabled'); d.classList.add('active'); }
+                if(m) m.textContent = '⚡ آپ کی باری!';
+            } else {
+                if(c) c.classList.remove('my-turn');
+                if(d){ d.classList.add('disabled'); d.classList.remove('active'); }
+                if(m) m.textContent = 'Waiting...';
+            }
+        }
+    }
+}
+
+// Update dice face
+function updateDice(num){
+    // hidden original
+    let dice = document.getElementById("randomButt");
+    dice.classList.add('rolling');
+    setTimeout(()=>{
+        dice.setAttribute('data-num', num);
+        dice.classList.remove('rolling');
+    }, 500);
+    // corner dice: update MY corner face
+    let myDice = document.getElementById('dice-' + myid);
+    if(myDice){
+        myDice.classList.add('rolling');
+        setTimeout(()=>{
+            myDice.setAttribute('data-num', num);
+            myDice.classList.remove('rolling');
+            let myCmsg = document.getElementById('cmsg-' + myid);
+            if(myCmsg) myCmsg.textContent = '🎲 ' + num + ' آیا!';
+        }, 500);
     }
 }
 
@@ -377,19 +470,31 @@ function styleButton(k){
 function diceAction(){
     socket.emit('roll-dice',{room:room_code,id:myid},function(num){
         console.log('19/6/21 dice rolled, got',num);
+        updateDice(num);
+        // BUG FIX 3: spirit includes movable pieces
+        // - pos>-1: گوٹی باہر ہے اور آگے جا سکتی ہے
+        // - pos==-1 && num==6: گوٹی گھر میں ہے، چھکے سے نکل سکتی ہے
         let spirit = [];
         for(let i=0;i<4;i++){
-            if(PLAYERS[myid].myPieces[i].pos>-1 && PLAYERS[myid].myPieces[i].pos + num <= 56){
-                spirit.push(i);
-
+            let piece = PLAYERS[myid].myPieces[i];
+            if(piece.pos > -1 && piece.pos + num <= 56){
+                spirit.push(i); // باہر والی گوٹی آگے جا سکتی ہے
+            } else if(piece.pos === -1 && num === 6){
+                spirit.push(i); // گھر والی گوٹی چھکے سے نکلے گی
             }
         }
-        if(spirit.length!=0 || num==6){
+        if(spirit.length != 0){
+            // FIX: اگر پہلے سے listener لگی ہے تو دوبارہ مت لگاؤ
+            if(waitingForPieceClick) return;
+            waitingForPieceClick = true;
             outputMessage('Click on a piece',3)
             canvas.addEventListener('click',function clickHandler(e){
-                console.log('19/6/21 click event litener added to canvas element');
-                let Xp = e.clientX - e.target.getBoundingClientRect().left;
-                let Yp = e.clientY - e.target.getBoundingClientRect().top;
+                let rect = e.target.getBoundingClientRect();
+                // موبائل پر canvas CSS سے چھوٹا ہوتا ہے - scale factor لگاؤ
+                let scaleX = canvas.width  / rect.width;
+                let scaleY = canvas.height / rect.height;
+                let Xp = (e.clientX - rect.left) * scaleX;
+                let Yp = (e.clientY - rect.top)  * scaleY;
                 let playerObj = {
                     room: room_code,
                     id: myid,
@@ -400,8 +505,20 @@ function diceAction(){
                 for(let i=0;i<4;i++){
                     if(Xp-PLAYERS[myid].myPieces[i].x<45 && Xp-PLAYERS[myid].myPieces[i].x>0 && Yp-PLAYERS[myid].myPieces[i].y<45 && Yp-PLAYERS[myid].myPieces[i].y>0){
                         console.log(i,'okokokok');
-                        if((spirit.includes(i) || num==6) && PLAYERS[myid].myPieces[i].pos+num <=56){
+                        let piece = PLAYERS[myid].myPieces[i];
+                        let canMove = spirit.includes(i) && (
+                            (piece.pos === -1 && num === 6) ||          // گھر سے نکلے گی
+                            (piece.pos > -1 && piece.pos + num <= 56)   // آگے جا سکتی ہے
+                        );
+                        if(canMove){
                             playerObj['pid'] = i;
+                            // پہلے اپنی گوٹی چلاؤ
+                            PLAYERS[myid].myPieces[i].update(num);
+                            allPlayerHandler();
+                            // پھر update کے بعد x,y,pos بھیجو
+                            playerObj['pos'] = PLAYERS[myid].myPieces[i].pos;
+                            playerObj['x']   = PLAYERS[myid].myPieces[i].x;
+                            playerObj['y']   = PLAYERS[myid].myPieces[i].y;
                             console.log(playerObj);
                             socket.emit('random',playerObj, function(data){
                                 styleButton(0);
@@ -409,6 +526,7 @@ function diceAction(){
                                 socket.emit('chance',{room: room_code, nxt_id: chanceRotation(myid,data)});
                             });
                             canvas.removeEventListener('click',clickHandler);
+                            waitingForPieceClick = false; // FIX: flag reset
                             return 0;
                         }else{
                             alert('Please click on a valid Piece.');
@@ -420,7 +538,11 @@ function diceAction(){
                 }
                 if(alert1){alert('You need to click on a piece of your color');}
             })
-        }else{socket.emit('chance',{room: room_code, nxt_id: chanceRotation(myid,num)});console.log('19/6/21 next chance');}
+        } else {
+            // کوئی گوٹی نہیں چل سکتی - اگلے کی باری
+            waitingForPieceClick = false;
+            socket.emit('chance',{room: room_code, nxt_id: chanceRotation(myid,num)});
+        }
     })
 }
 
@@ -433,12 +555,31 @@ function StartTheGame(){
     let copyText = `\n\nMy room:\n${window.location.href} \nor join the room via\nMy room code:${room_code}`
     document.getElementById('copy').innerHTML += copyText;
     if(MYROOM.length === 1){
-        styleButton(1);
         chance = Number(myid);
+        styleButton(1);
     }else{
-        styleButton(0);
+        // جو پہلے سے chance ہے اگر میں ہوں تو activate کرو
+        if(Number(chance) === Number(myid)){
+            styleButton(1);
+        } else {
+            styleButton(0);
+        }
     }
     loadAllPieces();
+
+    // Wire corner dice click → diceAction (only MY corner, only when active)
+    for(let i=0;i<4;i++){
+        let cd = document.getElementById('dice-' + i);
+        if(cd){
+            cd.addEventListener('click', function(){
+                if(this.classList.contains('disabled')) return;
+                if(Number(this.dataset.playerid || i) !== myid && i !== myid) return;
+                styleButton(0);
+                diceAction();
+            });
+            cd.dataset.playerid = i;
+        }
+    }
 }
 
 //Load all the images of the pieces
@@ -483,21 +624,15 @@ function loadAllPieces(){
     }
 }
 
-//rotate chance, required for the game
-function chanceRotation(id,num){
-    if(num==6){
-        console.log('19/6/21 nxt 0 chance(num==6)',id);
-        return id
-    }
-    else{
-        let c = MYROOM[chance+1]
-        if(c){
-            console.log('19/6/21 nxt 1 chance(MYROOM[chance+1])',c,'\nMYROOM',MYROOM,'\nPrevious chance',chance);
-            return c;
-        }else{
-            console.log('19/6/21 nxt 2 chance(MYROOM[0])',MYROOM[0],'\nMYROOM',MYROOM,'\nPrevious chance',chance,'c:',c,'chance+1',chance+1,'MYROOM[chance+1]',MYROOM[chance+1]);
-            return MYROOM[0];
-        }
+// BUG FIX 1: chance rotation - use indexOf not chance as index
+function chanceRotation(id, num){
+    if(num == 6){
+        return id; // چھکا - دوبارہ اسی کی باری
+    } else {
+        let currentIndex = MYROOM.indexOf(Number(id));
+        if(currentIndex === -1) currentIndex = MYROOM.indexOf(id);
+        let nextIndex = (currentIndex + 1) % MYROOM.length;
+        return MYROOM[nextIndex];
     }
 }
 
