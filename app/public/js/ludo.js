@@ -329,15 +329,19 @@ socket.on('connect',function(){
     socket.on('Thrown-dice',async function(data){
         console.log(data);
         if(Number(data.id) !== myid){
-            // دوسرے player کی گوٹی — سیدھا x,y,pos set کرو
+            // دوسرے player کی گوٹی — slide کرتے ہوئے جائے
+            var _fromX = PLAYERS[data.id].myPieces[data.pid].x;
+            var _fromY = PLAYERS[data.id].myPieces[data.pid].y;
+            PLAYERS[data.id].myPieces[data.pid].pos = data.pos;
             PLAYERS[data.id].myPieces[data.pid].x   = data.x;
             PLAYERS[data.id].myPieces[data.pid].y   = data.y;
-            PLAYERS[data.id].myPieces[data.pid].pos = data.pos;
             if(iKill(data.id,data.pid)){
                 outputMessage({msg:'Oops got killed',id:data.id},5);
                 if(window.LudoSound) LudoSound.kill();
             }
-            allPlayerHandler();
+            _slidePiece(data.id, data.pid, _fromX, _fromY, data.x, data.y, function(){
+                allPlayerHandler();
+            });
         } else {
             // اپنی گوٹی — پہلے ہی چل چکی ہے، صرف kill check کرو
             if(iKill(data.id,data.pid)){
@@ -518,26 +522,43 @@ function diceAction(){
                         );
                         if(canMove){
                             playerObj['pid'] = i;
-                            // پہلے اپنی گوٹی چلاؤ
+                            _stopBounce(); // bounce بند
+
+                            // آواز
                             if(window.LudoSound){
                                 if(num === 6 && PLAYERS[myid].myPieces[i].pos === -1) LudoSound.six();
                                 else LudoSound.move();
                             }
+
+                            // پرانی position یاد رکھو
+                            var fromX = PLAYERS[myid].myPieces[i].x;
+                            var fromY = PLAYERS[myid].myPieces[i].y;
+
+                            // update چلاؤ — نئی x,y,pos بدلے
                             PLAYERS[myid].myPieces[i].update(num);
-                            allPlayerHandler();
-                            // پھر update کے بعد x,y,pos بھیجو
+
+                            // نئی position
+                            var toX = PLAYERS[myid].myPieces[i].x;
+                            var toY = PLAYERS[myid].myPieces[i].y;
+
+                            // server کو بھیجو
                             playerObj['pos'] = PLAYERS[myid].myPieces[i].pos;
-                            playerObj['x']   = PLAYERS[myid].myPieces[i].x;
-                            playerObj['y']   = PLAYERS[myid].myPieces[i].y;
+                            playerObj['x']   = toX;
+                            playerObj['y']   = toY;
                             console.log(playerObj);
-                            socket.emit('random',playerObj, function(data){
+                            socket.emit('random', playerObj, function(data){
                                 styleButton(0);
                                 console.log('random acknowledged');
                                 socket.emit('chance',{room: room_code, nxt_id: chanceRotation(myid,data)});
                             });
+
+                            // sliding animation — پرانی سے نئی جگہ
+                            _slidePiece(myid, i, fromX, fromY, toX, toY, function(){
+                                allPlayerHandler();
+                            });
+
                             canvas.removeEventListener('click',clickHandler);
-                            waitingForPieceClick = false; // FIX: flag reset
-                            _stopBounce(); // animation بند
+                            waitingForPieceClick = false;
                             return 0;
                         }else{
                             alert('Please click on a valid Piece.');
@@ -649,6 +670,39 @@ function chanceRotation(id, num){
 }
 
 //draws 4 x 4 = 16 pieces per call
+// ── sliding animation ──
+function _slidePiece(colorId, pid, fromX, fromY, toX, toY, onDone) {
+    var duration = 300; // ms
+    var start    = null;
+
+    function step(ts) {
+        if (!start) start = ts;
+        var prog = Math.min((ts - start) / duration, 1);
+        // ease out
+        var ease = 1 - Math.pow(1 - prog, 3);
+
+        // گوٹی کی position interpolate کرو
+        window.PLAYERS[colorId].myPieces[pid].x = Math.round(fromX + (toX - fromX) * ease);
+        window.PLAYERS[colorId].myPieces[pid].y = Math.round(fromY + (toY - fromY) * ease);
+
+        // canvas draw کرو
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var i = 0; i < Object.keys(PLAYERS).length; i++) {
+            PLAYERS[MYROOM[i]].draw();
+        }
+
+        if (prog < 1) {
+            requestAnimationFrame(step);
+        } else {
+            // آخری position پر fix کرو
+            window.PLAYERS[colorId].myPieces[pid].x = toX;
+            window.PLAYERS[colorId].myPieces[pid].y = toY;
+            if (onDone) onDone();
+        }
+    }
+    requestAnimationFrame(step);
+}
+
 // ── bounce animation ──
 function _startBounce(spiritArr) {
     _animSpirit = spiritArr;
