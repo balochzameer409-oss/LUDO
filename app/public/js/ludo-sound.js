@@ -20,82 +20,208 @@ var LudoSound = (function () {
         src.start(0);
     }
 
-    function _tone(freq, type, start, dur, vol, ac) {
-        var osc = ac.createOscillator();
+    // ── بنیادی tone ──
+    function _tone(freq, type, start, dur, vol, ac, freqEnd) {
+        var osc  = ac.createOscillator();
         var gain = ac.createGain();
-        osc.connect(gain); gain.connect(ac.destination);
+        osc.connect(gain);
+        gain.connect(ac.destination);
         osc.type = type;
         osc.frequency.setValueAtTime(freq, start);
+        if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, start + dur);
         gain.gain.setValueAtTime(vol, start);
         gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
-        osc.start(start); osc.stop(start + dur);
+        osc.start(start);
+        osc.stop(start + dur + 0.01);
     }
 
-    function _noise(start, dur, vol, ac) {
+    // ── noise burst ──
+    function _noise(start, dur, vol, ac, filterFreq) {
         var size = Math.floor(ac.sampleRate * dur);
-        var buf = ac.createBuffer(1, size, ac.sampleRate);
+        var buf  = ac.createBuffer(1, size, ac.sampleRate);
         var data = buf.getChannelData(0);
         for (var i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
-        var src = ac.createBufferSource();
+
+        var src  = ac.createBufferSource();
         src.buffer = buf;
+
+        var filter = ac.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = filterFreq || 1000;
+        filter.Q.value = 0.8;
+
         var gain = ac.createGain();
-        src.connect(gain); gain.connect(ac.destination);
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(ac.destination);
         gain.gain.setValueAtTime(vol, start);
         gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
-        src.start(start); src.stop(start + dur);
+        src.start(start);
+        src.stop(start + dur + 0.01);
     }
 
+    // ── reverb جیسا echo ──
+    function _echo(ac, gainNode) {
+        try {
+            var delay = ac.createDelay(0.5);
+            var fb    = ac.createGain();
+            delay.delayTime.value = 0.12;
+            fb.gain.value = 0.25;
+            gainNode.connect(delay);
+            delay.connect(fb);
+            fb.connect(delay);
+            delay.connect(ac.destination);
+        } catch(e) {}
+    }
+
+    // ════════════════════════════════
+    //  🎲 DICE — اصل پانسے کی آواز
+    // ════════════════════════════════
     function dice() {
         var ac = _getCtx(); if (!ac || ac.state === 'suspended') return;
         var n = ac.currentTime;
-        _noise(n, 0.08, 0.4, ac); _noise(n+0.09, 0.07, 0.3, ac);
-        _tone(180,'square',n+0.22,0.06,0.3,ac);
-        _tone(220,'square',n+0.26,0.05,0.2,ac);
+
+        // لکڑی کی کھڑکھڑاہٹ
+        _noise(n,       0.04, 0.6, ac, 2500);
+        _noise(n+0.05,  0.03, 0.5, ac, 2000);
+        _noise(n+0.10,  0.04, 0.6, ac, 2500);
+        _noise(n+0.15,  0.03, 0.4, ac, 1800);
+        _noise(n+0.19,  0.05, 0.7, ac, 3000); // آخری ٹھک
+
+        // گہری لکڑی کی bass
+        _tone(120, 'sine', n,       0.06, 0.5, ac);
+        _tone(100, 'sine', n+0.10,  0.06, 0.4, ac);
+        _tone(90,  'sine', n+0.19,  0.08, 0.6, ac);
     }
 
+    // ════════════════════════════════
+    //  👣 MOVE — smooth ٹک
+    // ════════════════════════════════
     function move() {
         var ac = _getCtx(); if (!ac || ac.state === 'suspended') return;
         var n = ac.currentTime;
-        var osc = ac.createOscillator(), gain = ac.createGain();
-        osc.connect(gain); gain.connect(ac.destination);
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(300, n);
-        osc.frequency.linearRampToValueAtTime(520, n+0.08);
-        osc.frequency.linearRampToValueAtTime(380, n+0.15);
-        gain.gain.setValueAtTime(0.25, n);
-        gain.gain.exponentialRampToValueAtTime(0.001, n+0.18);
-        osc.start(n); osc.stop(n+0.18);
+
+        // پلاسٹک ٹک آواز
+        _noise(n, 0.015, 0.5, ac, 3500);
+
+        // اوپر جانے والی tone
+        var osc  = ac.createOscillator();
+        var gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(480, n);
+        osc.frequency.exponentialRampToValueAtTime(640, n + 0.06);
+        gain.gain.setValueAtTime(0.3, n);
+        gain.gain.exponentialRampToValueAtTime(0.001, n + 0.1);
+        osc.start(n);
+        osc.stop(n + 0.12);
+
+        // ہلکی echo
+        _echo(ac, gain);
     }
 
+    // ════════════════════════════════
+    //  💀 KILL — زوردار دھماکہ
+    // ════════════════════════════════
     function kill() {
         var ac = _getCtx(); if (!ac || ac.state === 'suspended') return;
         var n = ac.currentTime;
-        var osc = ac.createOscillator(), gain = ac.createGain();
-        osc.connect(gain); gain.connect(ac.destination);
+
+        // زوردار impact
+        _noise(n, 0.08, 0.9, ac, 800);
+        _noise(n, 0.15, 0.5, ac, 200);
+
+        // گرنے والی آواز
+        var osc  = ac.createOscillator();
+        var gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(440, n);
-        osc.frequency.exponentialRampToValueAtTime(80, n+0.35);
-        gain.gain.setValueAtTime(0.4, n);
-        gain.gain.exponentialRampToValueAtTime(0.001, n+0.38);
-        osc.start(n); osc.stop(n+0.4);
-        _noise(n, 0.12, 0.3, ac);
-        _tone(60,'sine',n+0.05,0.25,0.5,ac);
+        osc.frequency.setValueAtTime(320, n);
+        osc.frequency.exponentialRampToValueAtTime(40, n + 0.4);
+        gain.gain.setValueAtTime(0.5, n);
+        gain.gain.exponentialRampToValueAtTime(0.001, n + 0.45);
+        osc.start(n);
+        osc.stop(n + 0.5);
+
+        // bass thud
+        _tone(60, 'sine', n, 0.2, 0.7, ac);
+        _tone(45, 'sine', n+0.05, 0.25, 0.5, ac);
+
+        // echo
+        _echo(ac, gain);
     }
 
+    // ════════════════════════════════
+    //  🎉 WIN — خوشی والی دھن
+    // ════════════════════════════════
     function win() {
         var ac = _getCtx(); if (!ac || ac.state === 'suspended') return;
         var n = ac.currentTime;
-        [[523,0],[659,.12],[784,.24],[1047,.36],[784,.52],[1047,.60]].forEach(function(x){
-            _tone(x[0],'square',n+x[1],0.15,0.3,ac);
+
+        // خوشی کی دھن — C major arpeggio
+        var melody = [
+            [523, 0.00],  // C5
+            [659, 0.13],  // E5
+            [784, 0.26],  // G5
+            [1047,0.39],  // C6
+            [784, 0.52],  // G5
+            [880, 0.62],  // A5
+            [1047,0.72],  // C6
+            [1319,0.85],  // E6
+        ];
+
+        melody.forEach(function(x) {
+            var osc  = ac.createOscillator();
+            var gain = ac.createGain();
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(x[0], n + x[1]);
+            gain.gain.setValueAtTime(0.0, n + x[1]);
+            gain.gain.linearRampToValueAtTime(0.35, n + x[1] + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, n + x[1] + 0.18);
+            osc.start(n + x[1]);
+            osc.stop(n + x[1] + 0.2);
+            _echo(ac, gain);
+        });
+
+        // خوشی کے sparkle effects
+        [0, 0.3, 0.6, 0.9].forEach(function(t) {
+            _noise(n + t, 0.08, 0.2, ac, 6000 + Math.random() * 2000);
         });
     }
 
+    // ════════════════════════════════
+    //  6️⃣ SIX — واہ والی آواز
+    // ════════════════════════════════
     function six() {
         var ac = _getCtx(); if (!ac || ac.state === 'suspended') return;
         var n = ac.currentTime;
-        _tone(440,'square',n,0.08,0.3,ac);
-        _tone(550,'square',n+0.09,0.08,0.3,ac);
-        _tone(660,'square',n+0.18,0.12,0.35,ac);
+
+        // تیزی سے اوپر جانے والی آواز
+        var osc  = ac.createOscillator();
+        var gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(330, n);
+        osc.frequency.exponentialRampToValueAtTime(990, n + 0.25);
+        gain.gain.setValueAtTime(0.4, n);
+        gain.gain.exponentialRampToValueAtTime(0.001, n + 0.3);
+        osc.start(n);
+        osc.stop(n + 0.32);
+
+        // تین چمکیلے notes
+        _tone(660,  'sine', n + 0.05, 0.08, 0.25, ac);
+        _tone(880,  'sine', n + 0.13, 0.08, 0.25, ac);
+        _tone(1100, 'sine', n + 0.21, 0.10, 0.30, ac);
+
+        // sparkle
+        _noise(n + 0.22, 0.1, 0.3, ac, 5000);
+
+        _echo(ac, gain);
     }
 
     return { unlock:unlock, dice:dice, move:move, kill:kill, win:win, six:six };
