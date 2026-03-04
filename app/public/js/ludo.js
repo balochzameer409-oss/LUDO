@@ -9,6 +9,8 @@ let myid = -1;
 let chance = Number(-1);
 var PLAYERS = {};
 let waitingForPieceClick = false; // FIX: multiple listeners سے بچاؤ
+let _animSpirit = [];      // bounce animation والی گوٹیاں
+let _animFrame  = null;    // animation frame id
 
 var canvas = document.getElementById('theCanvas');
 var ctx = canvas.getContext('2d');
@@ -490,6 +492,7 @@ function diceAction(){
             // FIX: اگر پہلے سے listener لگی ہے تو دوبارہ مت لگاؤ
             if(waitingForPieceClick) return;
             waitingForPieceClick = true;
+            _startBounce(spirit); // bounce animation شروع
             outputMessage('Click on a piece',3)
             canvas.addEventListener('click',function clickHandler(e){
                 let rect = e.target.getBoundingClientRect();
@@ -534,6 +537,7 @@ function diceAction(){
                             });
                             canvas.removeEventListener('click',clickHandler);
                             waitingForPieceClick = false; // FIX: flag reset
+                            _stopBounce(); // animation بند
                             return 0;
                         }else{
                             alert('Please click on a valid Piece.');
@@ -548,6 +552,7 @@ function diceAction(){
         } else {
             // کوئی گوٹی نہیں چل سکتی - اگلے کی باری
             waitingForPieceClick = false;
+            _stopBounce();
             socket.emit('chance',{room: room_code, nxt_id: chanceRotation(myid,num)});
         }
     })
@@ -644,6 +649,53 @@ function chanceRotation(id, num){
 }
 
 //draws 4 x 4 = 16 pieces per call
+// ── bounce animation ──
+function _startBounce(spiritArr) {
+    _animSpirit = spiritArr;
+    if(_animFrame) cancelAnimationFrame(_animFrame);
+    _animLoop();
+}
+
+function _stopBounce() {
+    _animSpirit = [];
+    if(_animFrame) cancelAnimationFrame(_animFrame);
+    _animFrame = null;
+    allPlayerHandler(); // آخری بار draw کرو
+}
+
+function _animLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // سب گوٹیاں draw کرو
+    for(let i = 0; i < Object.keys(PLAYERS).length; i++){
+        PLAYERS[MYROOM[i]].draw();
+    }
+
+    // spirit والی گوٹیاں bounce + glow
+    let t = Date.now();
+    _animSpirit.forEach(function(pid) {
+        let piece = PLAYERS[myid].myPieces[pid];
+        let bounce = Math.sin(t / 180) * 8; // اوپر نیچے
+
+        // glow ring
+        ctx.save();
+        ctx.shadowBlur   = 18;
+        ctx.shadowColor  = 'gold';
+        ctx.strokeStyle  = 'gold';
+        ctx.lineWidth    = 3;
+        ctx.globalAlpha  = 0.7 + Math.sin(t / 200) * 0.3;
+        ctx.beginPath();
+        ctx.arc(piece.x + 25, piece.y + 25 + bounce, 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // گوٹی bounce کے ساتھ
+        ctx.drawImage(piece.image, piece.x, piece.y + bounce, 50, 50);
+    });
+
+    _animFrame = requestAnimationFrame(_animLoop);
+}
+
 function allPlayerHandler(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for(let i=0;i<Object.keys(PLAYERS).length;i++){
