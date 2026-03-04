@@ -610,18 +610,11 @@ function loadAllPieces(){
 
 // BUG FIX 1: chance rotation - use indexOf not chance as index
 function chanceRotation(id, num){
-    id = Number(id); // پہلے number میں convert کریں
-    
     if(num == 6){
         return id; // چھکا - دوبارہ اسی کی باری
     } else {
-        let currentIndex = MYROOM.indexOf(id);
-        
-        if(currentIndex === -1){
-            console.error('⚠️ Player not found in MYROOM:', id, MYROOM);
-            return MYROOM[0] || 0; // fallback
-        }
-        
+        let currentIndex = MYROOM.indexOf(Number(id));
+        if(currentIndex === -1) currentIndex = MYROOM.indexOf(id);
         let nextIndex = (currentIndex + 1) % MYROOM.length;
         return MYROOM[nextIndex];
     }
@@ -695,11 +688,12 @@ function iKill(id,pid){
 }
 
 function inAhomeTile(id,pid){
-    // صحیح ہے: صرف یہ player کا home tile check کریں
-    if((PLAYERS[id].myPieces[pid].x == homeTilePos[id][0].x && PLAYERS[id].myPieces[pid].y == homeTilePos[id][0].y) || 
-       (PLAYERS[id].myPieces[pid].x == homeTilePos[id][1].x && PLAYERS[id].myPieces[pid].y == homeTilePos[id][1].y)){
-        return true;
+    for(let i=0;i<4;i++){
+        if((PLAYERS[id].myPieces[pid].x == homeTilePos[i][0].x && PLAYERS[id].myPieces[pid].y == homeTilePos[i][0].y) || (PLAYERS[id].myPieces[pid].x == homeTilePos[i][1].x && PLAYERS[id].myPieces[pid].y == homeTilePos[i][1].y)){
+            return true;
+        }
     }
+
     return false;
 }
 
@@ -791,8 +785,7 @@ function resumeHandler(id){
 function resume(id){
     document.getElementById("myModal-2").style.display = "none";
     clearInterval(timer);
-    // ✅ صحیح: اب صحیح player remove ہوگا
-    MYROOM = MYROOM.filter(pid => pid !== id);
+    MYROOM.splice(id,1);
     delete PLAYERS[id];
     allPlayerHandler();
 }
