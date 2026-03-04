@@ -549,7 +549,10 @@ function diceAction(){
                             socket.emit('random', playerObj, function(data){
                                 styleButton(0);
                                 console.log('random acknowledged');
-                                socket.emit('chance',{room: room_code, nxt_id: chanceRotation(myid,data)});
+                                // kill ہوئی تو دوبارہ اسی کی باری
+                                var killed = iKill(myid, playerObj['pid']);
+                                var nextId = killed ? myid : chanceRotation(myid, data);
+                                socket.emit('chance',{room: room_code, nxt_id: nextId});
                             });
 
                             // sliding animation — پرانی سے نئی جگہ
