@@ -671,26 +671,28 @@ function _animLoop() {
         PLAYERS[MYROOM[i]].draw();
     }
 
-    // spirit والی گوٹیاں bounce + glow
+    // spirit والی گوٹیاں scale + glow
     let t = Date.now();
     _animSpirit.forEach(function(pid) {
         let piece = PLAYERS[myid].myPieces[pid];
-        let bounce = Math.sin(t / 180) * 8; // اوپر نیچے
+        let scale = 1 + Math.sin(t / 200) * 0.15; // 1.0 سے 1.15 تک
+        let size  = 50 * scale;
+        let offset = (size - 50) / 2; // مرکز میں رکھو
 
         // glow ring
         ctx.save();
-        ctx.shadowBlur   = 18;
-        ctx.shadowColor  = 'gold';
-        ctx.strokeStyle  = 'gold';
-        ctx.lineWidth    = 3;
-        ctx.globalAlpha  = 0.7 + Math.sin(t / 200) * 0.3;
+        ctx.shadowBlur  = 20;
+        ctx.shadowColor = 'gold';
+        ctx.strokeStyle = 'gold';
+        ctx.lineWidth   = 3;
+        ctx.globalAlpha = 0.6 + Math.sin(t / 200) * 0.4;
         ctx.beginPath();
-        ctx.arc(piece.x + 25, piece.y + 25 + bounce, 28, 0, Math.PI * 2);
+        ctx.arc(piece.x + 25, piece.y + 25, 28 * scale, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
-        // گوٹی bounce کے ساتھ
-        ctx.drawImage(piece.image, piece.x, piece.y + bounce, 50, 50);
+        // گوٹی scale کے ساتھ — وہیں پر
+        ctx.drawImage(piece.image, piece.x - offset, piece.y - offset, size, size);
     });
 
     _animFrame = requestAnimationFrame(_animLoop);
