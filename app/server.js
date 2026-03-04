@@ -14,7 +14,9 @@ const app = express();
 const server = createServer(app);
 const io = socketIO(server, {
     cors: {
-      origin: '*'
+      // ✅ FIX: CORS کو محدود کریں
+      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost'],
+      credentials: true
     }});
 
 app.use(express.static(join(__dirname, 'public/')));
@@ -30,24 +32,35 @@ nsp.on('connection',(socket)=>{
     console.log('A User has connected to the game');
     socket.on('fetch',(data,cb)=>{
         try{
+            // ✅ FIX: data اور room validate کریں
+            if(!data || typeof data !== 'string' || !rooms[data]){
+                socket.emit('imposter');
+                return;
+            }
+            
             let member_id = generate_member_id(socket.id,data);
             socket.join(data);
             if(member_id !== -1){
                 cb(Object.keys(rooms[data]),member_id);
                 socket.to(data).emit('new-user-joined',{id:member_id});
             }else{
-                console.log('There is someone with m_id = -1');
+                console.log('⚠️ Room is full or error in member_id generation');
+                socket.emit('imposter');
             }
         }
         catch(err){
-            if(err.name === 'TypeError'){
-                socket.emit('imposter');
-            }
-            console.log("hello",err,rooms);
+            console.error('ERROR in fetch:', err.message);
+            socket.emit('imposter');
         }
     });
 
     socket.on('roll-dice',(data,cb)=>{
+        // ✅ FIX: data validation
+        if(!data || !data.room || !rooms[data.room] || !rooms[data.room][data.id]){
+            console.error('❌ Invalid dice roll data:', data);
+            return;
+        }
+        
         rooms[data.room][data.id]['num'] = Math.floor((Math.random()*6) + 1);
         data['num'] = rooms[data.room][data.id]['num']
         nsp.to(data.room).emit('rolled-dice',data);
@@ -60,6 +73,12 @@ nsp.on('connection',(socket)=>{
     });
 
     socket.on('random',(playerObj,cb)=>{
+        // ✅ FIX: data validation پہلے
+        if(!playerObj || !playerObj.room || !rooms[playerObj.room] || !rooms[playerObj.room][playerObj.id]){
+            console.error('❌ Invalid random data:', playerObj);
+            return;
+        }
+        
         // playerObj ={
         //     room: room_code,
         //     id: myid,
@@ -67,7 +86,7 @@ nsp.on('connection',(socket)=>{
         //     num: temp
         // }
         if(playerObj['num'] != rooms[playerObj.room][playerObj.id]['num']){
-            console.log('Someone is trying to cheat!');
+            console.log('⚠️ Someone is trying to cheat!', playerObj.id);
         }
         playerObj['num'] = rooms[playerObj.room][playerObj.id]['num']
         nsp.to(playerObj.room).emit('Thrown-dice', playerObj);
@@ -75,10 +94,19 @@ nsp.on('connection',(socket)=>{
     });
 
     socket.on('WON',(OBJ)=>{
-        // BUG FIX: win object initialize کریں اگر نہیں ہے
+        // ✅ FIX: data validation اور proper cleanup
+        if(!OBJ || !OBJ.room || !rooms[OBJ.room]){
+            console.error('❌ Invalid WON data:', OBJ);
+            return;
+        }
+        
         if(!win[OBJ.room]) win[OBJ.room] = {};
-        if(validateWinner(OBJ,socket)){
+        
+        if(validateWinner(OBJ, socket)){
             let winnerId = OBJ.id;
+            console.log(`🏆 Winner announced: Player ${winnerId} in room ${OBJ.room}`);
+            
+            // صحیح cleanup
             delete win[OBJ.room];
             delete NumberOfMembers[OBJ.room];
             if(rooms[OBJ.room]){
@@ -89,13 +117,25 @@ nsp.on('connection',(socket)=>{
     });
 
     socket.on('resume',(data,cb)=>{
+        // ✅ FIX: data validation
+        if(!data || !data.room){
+            console.error('❌ Invalid resume data');
+            return;
+        }
+        
         socket.to(data.room).emit('resume',data);
-        NumberOfMembers[data.room].members<=2?2:NumberOfMembers[data.room].members -= 1;
-        NumberOfMembers[data.room].constant = true;
+        if(NumberOfMembers[data.room]){
+            NumberOfMembers[data.room].members = NumberOfMembers[data.room].members <= 2 ? 2 : NumberOfMembers[data.room].members - 1;
+            NumberOfMembers[data.room].constant = true;
+        }
         cb();
     });
 
     socket.on('wait',(data,cb)=>{
+        if(!data || !data.room){
+            console.error('❌ Invalid wait data');
+            return;
+        }
         socket.to(data.room).emit('wait',data);
         cb();
     });
@@ -103,8 +143,8 @@ nsp.on('connection',(socket)=>{
     socket.on('disconnect',()=>{
         let roomKey = deleteThisid(socket.id);
         if(roomKey != undefined){
-            console.log(rooms[roomKey.room],socket.id);
-            socket.to(roomKey.room).emit('user-disconnected',roomKey.key)
+            console.log('🔌 Player disconnected from room:', roomKey.room);
+            socket.to(roomKey.room).emit('user-disconnected', roomKey.key)
         }
         console.log('A client just got disconnected');
     });
@@ -119,13 +159,18 @@ nsp.on('connection',(socket)=>{
 function generate_member_id(s_id,rc){
     let m_id = Math.floor(Math.random()*4);
     let m_r = Object.keys(rooms[rc]);
-    if(m_r.length <= 4){
+    if(m_r.length < 4){  // ✅ FIX: <= سے < میں تبدیل
         if(m_r.includes(m_id.toString())){
-            return generate_member_id(s_id,rc)
-        }else{
-            rooms[rc][m_id] = {sid:s_id,num:0};
-            return m_id;
+            // ✅ FIX: recursion کو limit دیں
+            let attempts = 0;
+            while(m_r.includes(m_id.toString()) && attempts < 10){
+                m_id = Math.floor(Math.random()*4);
+                attempts++;
+            }
+            if(attempts >= 10) return -1; // fallback
         }
+        rooms[rc][m_id] = {sid:s_id,num:0};
+        return m_id;
     } else{
         return -1;
     }
@@ -135,38 +180,55 @@ function generate_member_id(s_id,rc){
 function deleteThisid(id){
     for(var roomcd in rooms){
         if(rooms.hasOwnProperty(roomcd)){
-            ky = Object.keys(rooms[roomcd]).find( key => rooms[roomcd][key]['sid'] == id);
+            let ky = Object.keys(rooms[roomcd]).find( key => rooms[roomcd][key]['sid'] == id);
             if(typeof(ky) === 'string'){
                 delete rooms[roomcd][ky];
+                
+                // ✅ FIX: خالی room کو delete کریں
+                if(Object.keys(rooms[roomcd]).length == 0){
+                    delete rooms[roomcd];
+                    // ✅ FIX: cleanup win اور NumberOfMembers بھی
+                    if(win[roomcd]) delete win[roomcd];
+                    if(NumberOfMembers[roomcd]) delete NumberOfMembers[roomcd];
+                }
+                
                 return {key:ky,room:roomcd};
-            }
-            if(Object.keys(rooms[roomcd]).length == 0){
-                delete rooms[roomcd];
-                return undefined;
             }
         }
     }
-    
+    return undefined;
 }
 
-// BUG FIX 2: validateWinner - properly call the inner function
-// پہلے تمام players کا report آنے کا انتظار کریں
-// پھر check کریں کہ سب کا winner ID ایک ہی ہے
+// ✅ FIX: بہتر winner validation
 function validateWinner(OBJ, socket){
     if(!win[OBJ.room]) win[OBJ.room] = {};
-    win[OBJ.room][OBJ.player] = {o: OBJ, s: socket.id};
+    
+    // ✅ FIX: OBJ.reportedBy یا OBJ.player - واضح ہونا چاہیے
+    let reportKey = OBJ.reportedBy !== undefined ? OBJ.reportedBy : OBJ.player;
+    win[OBJ.room][reportKey] = {o: OBJ, s: socket.id};
     
     let roomPlayers = Object.keys(rooms[OBJ.room] || {});
     let reportCount = Object.keys(win[OBJ.room]).length;
     
     // سب players نے report کیا؟
-    if(reportCount < roomPlayers.length) return false;
+    if(reportCount < roomPlayers.length) {
+        console.log(`⏳ Waiting for winner confirmation: ${reportCount}/${roomPlayers.length} reports`);
+        return false;
+    }
     
     // سب کا winner ID ایک ہی ہونا چاہیے
-    let winnerId = win[OBJ.room][Object.keys(win[OBJ.room])[0]].o.id;
+    let winnerId = null;
     for(let key in win[OBJ.room]){
-        if(win[OBJ.room][key].o.id !== winnerId) return false;
+        let currentWinnerId = win[OBJ.room][key].o.id;
+        if(winnerId === null){
+            winnerId = currentWinnerId;
+        } else if(winnerId !== currentWinnerId){
+            console.error('❌ Conflicting winner reports!');
+            return false;
+        }
     }
+    
+    console.log(`✅ Winner validated: ${winnerId}`);
     return true;
 }
 
