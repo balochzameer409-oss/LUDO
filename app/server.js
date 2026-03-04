@@ -156,24 +156,17 @@ nsp.on('connection',(socket)=>{
 //
 
 //to randomise the color a player can get when he 'fetch'es.
-function generate_member_id(s_id,rc){
-    let m_id = Math.floor(Math.random()*4);
-    let m_r = Object.keys(rooms[rc]);
-    if(m_r.length < 4){  // ✅ FIX: <= سے < میں تبدیل
-        if(m_r.includes(m_id.toString())){
-            // ✅ FIX: recursion کو limit دیں
-            let attempts = 0;
-            while(m_r.includes(m_id.toString()) && attempts < 10){
-                m_id = Math.floor(Math.random()*4);
-                attempts++;
-            }
-            if(attempts >= 10) return -1; // fallback
+function generate_member_id(s_id, rc){
+    if(Object.keys(rooms[rc]).length >= 4) return -1;
+
+    // خالی جگہ سیدھا ڈھونڈو
+    for(let i = 0; i < 4; i++){
+        if(!rooms[rc][i]){
+            rooms[rc][i] = {sid: s_id, num: 0};
+            return i;
         }
-        rooms[rc][m_id] = {sid:s_id,num:0};
-        return m_id;
-    } else{
-        return -1;
     }
+    return -1;
 }
 
 //to delete the extra place when (only one) user refreshes.
