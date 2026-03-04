@@ -333,12 +333,14 @@ socket.on('connect',function(){
             PLAYERS[data.id].myPieces[data.pid].pos = data.pos;
             if(iKill(data.id,data.pid)){
                 outputMessage({msg:'Oops got killed',id:data.id},5);
+                if(window.LudoSound) LudoSound.kill();
             }
             allPlayerHandler();
         } else {
             // اپنی گوٹی — پہلے ہی چل چکی ہے، صرف kill check کرو
             if(iKill(data.id,data.pid)){
                 outputMessage({msg:'Oops got killed',id:data.id},5);
+                if(window.LudoSound) LudoSound.kill();
                 allPlayerHandler();
             }
         }
@@ -470,6 +472,7 @@ function updateDice(num){
 function diceAction(){
     socket.emit('roll-dice',{room:room_code,id:myid},function(num){
         console.log('19/6/21 dice rolled, got',num);
+        if(window.LudoSound) LudoSound.dice();
         updateDice(num);
         // BUG FIX 3: spirit includes movable pieces
         // - pos>-1: گوٹی باہر ہے اور آگے جا سکتی ہے
@@ -513,6 +516,10 @@ function diceAction(){
                         if(canMove){
                             playerObj['pid'] = i;
                             // پہلے اپنی گوٹی چلاؤ
+                            if(window.LudoSound){
+                                if(num === 6 && PLAYERS[myid].myPieces[i].pos === -1) LudoSound.six();
+                                else LudoSound.move();
+                            }
                             PLAYERS[myid].myPieces[i].update(num);
                             allPlayerHandler();
                             // پھر update کے بعد x,y,pos بھیجو
@@ -715,6 +722,7 @@ function inAhomeTile(id,pid){
 
 function showModal(id){
     window.localStorage.clear();
+    if(window.LudoSound) LudoSound.win();
     document.getElementById("myModal-1").style.display = "block";
     document.getElementById("win-win").innerHTML = `The winner is ${USERNAMES[id]}`
 
