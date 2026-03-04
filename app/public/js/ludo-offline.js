@@ -209,14 +209,23 @@ class Piece {
     draw() { ctx.drawImage(this.image, this.x, this.y, 50, 50); }
 
     update(num) {
-        if (this.pos !== -1 && this.pos + num <= 56) {
-            for (let i = this.pos; i < this.pos + num; i++) this.path[i](this.color_id, this.Pid);
-            this.pos += num;
-            if (this.pos === 56) PLAYERS[this.color_id].won += 1;
-        } else if (num === 6 && this.pos === -1) {
+        // اگر گوٹی ابھی home میں ہے (pos === -1) اور چھکا ہے
+        if (this.pos === -1 && num === 6) {
             this.x   = homeTilePos[this.color_id][0].x;
             this.y   = homeTilePos[this.color_id][0].y;
             this.pos = 0;
+        } 
+        // اگر گوٹی پہلے سے board میں ہے اور آگے جا سکتی ہے
+        else if (this.pos > -1 && this.pos + num <= 56) {
+            // path میں صحیح position سے شروع کریں
+            for (let i = 0; i < num; i++) {
+                let pathIndex = this.pos + i;
+                if (pathIndex < this.path.length) {
+                    this.path[pathIndex](this.color_id, this.Pid);
+                }
+            }
+            this.pos += num;
+            if (this.pos === 56) PLAYERS[this.color_id].won += 1;
         }
     }
 
@@ -329,7 +338,29 @@ function nextTurn(lastNum) {
     if (lastNum === 6) {
         if (window.LudoSound) LudoSound.six();
         outputMessage(USERNAMES[chance] + ' کو چھکا — دوبارہ باری! 🎉', 'server');
-        activateChance(chance);
+        
+        // چھکے کے بعد check کریں کہ کوئی گوٹی چل سکتی ہے یا نہیں
+        var hasMovablePiece = false;
+        for (var i = 0; i < 4; i++) {
+            var p = PLAYERS[chance].myPieces[i];
+            // اگر کوئی گوٹی ہے تو چھکے کے بعد موقع دیں
+            if (p.pos === -1 || p.pos > -1) {
+                hasMovablePiece = true;
+                break;
+            }
+        }
+        
+        if (hasMovablePiece) {
+            activateChance(chance); // دوبارہ یہی کھیل سکتا ہے
+        } else {
+            // کوئی گوٹی نہیں چل سکتی — اگلے کی باری
+            outputMessage('⚠️ ' + USERNAMES[chance] + ' کے پاس کوئی گوٹی نہیں چل سکتی!', 'server');
+            var idx    = MYROOM.indexOf(chance);
+            var nextId = MYROOM[(idx + 1) % MYROOM.length];
+            chance = nextId;
+            activateChance(nextId);
+            outputMessage('👉 ' + USERNAMES[nextId] + ' کی باری!', nextId);
+        }
     } else {
         var idx    = MYROOM.indexOf(chance);
         var nextId = MYROOM[(idx + 1) % MYROOM.length];
