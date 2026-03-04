@@ -73,7 +73,7 @@ function randomPath(){
         let randomCode = (
             Math.random().toString(36).substr(2, 6) + 
             Math.random().toString(36).substr(2, 6)
-        ).substr(0, 8).toUpperCase(); // بڑے حروف میں
+        ).substr(0, 6).toUpperCase(); // بڑے حروف میں
         
         // چیک کریں کہ یہ کوڈ پہلے سے موجود تو نہیں
         if(!Object.keys(rooms).includes(randomCode)){
