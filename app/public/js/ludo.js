@@ -324,26 +324,23 @@ socket.on('connect',function(){
         }
     });
 
+    // ✅ FIX: SYNC positions اور pos جب کوئی دوسرا piece move کرے
     socket.on('Thrown-dice',async function(data){
-        console.log(data);
+        console.log('🎮 Thrown-dice received:', data);
+        
+        // ✅ CRITICAL FIX: دوسرے player کی piece کو sync کریں
         if(Number(data.id) !== myid){
-            // دوسرے player کی گوٹی — سیدھا x,y,pos set کرو
-            PLAYERS[data.id].myPieces[data.pid].x   = data.x;
-            PLAYERS[data.id].myPieces[data.pid].y   = data.y;
+            // اگر مجھ سے پہلے والا player ہے تو اس کی pos sync کریں
             PLAYERS[data.id].myPieces[data.pid].pos = data.pos;
-            if(iKill(data.id,data.pid)){
-                outputMessage({msg:'Oops got killed',id:data.id},5);
-            }
+            console.log(`✅ Synced piece ${data.pid} of player ${data.id} to pos: ${data.pos}`);
+        }
+        
+        await PLAYERS[data.id].myPieces[data.pid].update(data.num);
+        if(iKill(data.id,data.pid)){
+            outputMessage({msg:'Oops got killed',id:data.id},5);
             allPlayerHandler();
-        } else {
-            // اپنی گوٹی — پہلے جیسے update چلاؤ
-            await PLAYERS[data.id].myPieces[data.pid].update(data.num);
-            if(iKill(data.id,data.pid)){
-                outputMessage({msg:'Oops got killed',id:data.id},5);
-                allPlayerHandler();
-            }else{
-                allPlayerHandler();
-            }
+        }else{
+            allPlayerHandler();
         }
         if(PLAYERS[data.id].didIwin()){
             socket.emit('WON',{
@@ -356,55 +353,59 @@ socket.on('connect',function(){
 
     socket.on('winner',function(data){
         showModal(data);
-    })
+    });
+
+    socket.on('WON',function(data){
+        console.log('WON socket received');
+        showModal(data.id);
+    });
 
 });
 
+// ✅ FIX 2: Broadcast positions سے پہلے
+socket.on('update-positions-broadcast', (data) => {
+    console.log('📍 Update positions broadcast:', data);
+    // تمام players کی positions update کریں
+    for(let playerId in data.positions){
+        for(let pieceId in data.positions[playerId]){
+            PLAYERS[playerId].myPieces[pieceId].x = data.positions[playerId][pieceId].x;
+            PLAYERS[playerId].myPieces[pieceId].y = data.positions[playerId][pieceId].y;
+            PLAYERS[playerId].myPieces[pieceId].pos = data.positions[playerId][pieceId].pos;
+        }
+    }
+    allPlayerHandler();
+});
 
-//To know if the client has disconnected with the server
-socket.on('disconnect', function(){
-    console.log('You are disconnected to the server');
-})
-
-//Output the message through DOM manipulation
 function outputMessage(anObject,k){
-    let msgBoard = document.querySelector('.msgBoard');
-
-    if(k===1 && !(anObject.Name.includes('<') || anObject.Name.includes('>') || anObject.Name.includes('/'))){    
-        const div = document.createElement('div');
-        div.classList.add('message')
-        div.innerHTML = `<p><strong>&#9733;  <span id="color-message-span1"style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Name}</span></strong><span id="color-message-span2"> got a ${anObject.Num}</span></p>`;
+    let msgBoard = document.getElementById('msgBoard');
+    let div = document.createElement('div');
+    //k tells which type of message we want to print
+    //0: new player
+    //1: dice
+    //2: moving
+    //3: click on piece
+    //4: chance of which player
+    //5: killing or resume...
+    //6: disconnection
+    if(k===0){
+        div.innerHTML = `<p>&#128512; <span id="color-message-span1"style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Name}</span> <span id="color-message-span2">joined the game</span></p>`;
         msgBoard.appendChild(div);
-    }
-    else if(k===0 && !(anObject.Name.includes('<') || anObject.Name.includes('>') || anObject.Name.includes('/'))){
-        const div = document.createElement('div');
-        div.classList.add('messageFromServer');
-        div.innerHTML = `<p>&#8605;  <span id="color-message-span1"style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Name}</span><span id="color-message-span2"> entered the game</span></p>`;
+    }else if(k===1){
+        div.innerHTML = `<p>🎲 <span id="color-message-span1" style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Name}</span> <span id="color-message-span2">rolled a</span> <span id="color-message-span3" style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Num}</span></p>`;
         msgBoard.appendChild(div);
-    }
-    else if(k===3){
-        const div = document.createElement('div');
-        div.classList.add('messageFromServer');
-        div.innerHTML = `<span id="color-message-span2" style="text-shadow: 0 0 4px ${colors[myid]};">${anObject}!!</span>`
+    }else if(k===2){
+        div.innerHTML = `<p>⚡ <span id="color-message-span1"style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Name}</span> <span id="color-message-span2">moved a piece by</span> <span id="color-message-span3" style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Num}</span></p>`;
         msgBoard.appendChild(div);
-    }
-    else if(k===4){
-        const div = document.createElement('div');
-        div.classList.add('messageFromServer');
-        div.innerHTML = `<p><span id="color-message-span2">Its </span><span id="color-message-span1"style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Name}</span><span id="color-message-span2"> chance!!</span></p>`
+    }else if(k===3){
+        div.innerHTML = `<p>👆 ${anObject}</p>`;
         msgBoard.appendChild(div);
-    }
-
-    else if(k===5){
-        const div = document.createElement('div');
-        div.classList.add('messageFromServer');
-        div.innerHTML = `<span id="color-message-span2" style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.msg}!!</span>`
+    }else if(k===4){
+        div.innerHTML = `<p>✨ <span id="color-message-span1"style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Name}</span> <span id="color-message-span2">'s turn now!</span></p>`;
         msgBoard.appendChild(div);
-    }
-
-    else if(k===6){
-        const div = document.createElement('div');
-        div.classList.add('messageFromServer');
+    }else if(k===5){
+        div.innerHTML = `<p>${anObject.msg}</p>`;
+        msgBoard.appendChild(div);
+    }else if(k===6){
         div.innerHTML = `<p>&#8605;  <span id="color-message-span1"style="text-shadow: 0 0 4px ${colors[anObject.id]};">${anObject.Name}</span><span id="color-message-span2"> just left the game</span></p>`;
         msgBoard.appendChild(div);
     }
@@ -515,9 +516,7 @@ function diceAction(){
                         );
                         if(canMove){
                             playerObj['pid'] = i;
-                            playerObj['pos'] = PLAYERS[myid].myPieces[i].pos;
-                            playerObj['x']   = PLAYERS[myid].myPieces[i].x;
-                            playerObj['y']   = PLAYERS[myid].myPieces[i].y;
+                            playerObj['pos'] = PLAYERS[myid].myPieces[i].pos; // sync کے لیے
                             console.log(playerObj);
                             socket.emit('random',playerObj, function(data){
                                 styleButton(0);
@@ -568,58 +567,17 @@ function StartTheGame(){
 
     // Wire corner dice click → diceAction (only MY corner, only when active)
     for(let i=0;i<4;i++){
-        let cd = document.getElementById('dice-' + i);
-        if(cd){
-            cd.addEventListener('click', function(){
+        let cornerDice = document.getElementById('dice-' + i);
+        if(cornerDice){
+            cornerDice.addEventListener('click', function(e){
+                e.preventDefault();
                 if(this.classList.contains('disabled')) return;
-                if(Number(this.dataset.playerid || i) !== myid && i !== myid) return;
-                styleButton(0);
-                diceAction();
+                if(i === myid && chance === myid){
+                    styleButton(0);
+                    diceAction();
+                }
             });
-            cd.dataset.playerid = i;
         }
-    }
-}
-
-//Load all the images of the pieces
-function loadAllPieces(){
-    let cnt = 0;
-    for(let i=0;i<colors.length;i++){
-        let img = new Image();
-        img.src = "../images/pieces/"+colors[i]+".png";
-        img.onload = ()=>{
-            ++cnt;
-            if(cnt >= colors.length){
-                //all images are loaded
-                for(let j=0;j<MYROOM.length;j++){
-                    PLAYERS[MYROOM[j]] = new Player(MYROOM[j]);
-                }
-                if(window.localStorage.getItem('room')==room_code){
-                    console.log('19/6/21 yes my localStorage is for this room');
-                    if(window.localStorage.getItem('started')=='true'){
-                        console.log('19/6/21 yes i from this room');
-                        chance = Number(window.localStorage.getItem('chance'));
-                        let positions = JSON.parse(window.localStorage.getItem('positions'));
-                        let win = JSON.parse(window.localStorage.getItem('win'));
-                        for(let i=0;i<MYROOM.length;i++){
-                            PLAYERS[MYROOM[i]].win = Number(MYROOM[i]);
-                            for(let j=0;j<4;j++){
-                                console.log('19/6/21 yes room==room_code && started==true:i,j:',i,j);
-                                PLAYERS[MYROOM[i]].myPieces[j].x = Number(positions[MYROOM[i]][j].x);
-                                PLAYERS[MYROOM[i]].myPieces[j].y = Number(positions[MYROOM[i]][j].y);
-                                PLAYERS[MYROOM[i]].myPieces[j].pos = Number(positions[MYROOM[i]][j].pos);
-                            }
-                        }
-                        allPlayerHandler();
-                    }else{allPlayerHandler();}
-                }else{
-                    window.localStorage.clear();
-                    window.localStorage.setItem('room', room_code);
-                    allPlayerHandler();
-                }
-            }
-        }
-        PIECES.push(img);
     }
 }
 
@@ -647,7 +605,7 @@ function allPlayerHandler(){
     let win = {}
     for(let i=0;i<MYROOM.length;i++){
         positions[MYROOM[i]] = {}
-        win[MYROOM[i]] = PLAYERS[MYROOM[i]].win
+        win[MYROOM[i]] = PLAYERS[MYROOM[i]].won
         for(let j=0;j<4;j++){
             positions[MYROOM[i]][j] = {
                 x:PLAYERS[MYROOM[i]].myPieces[j].x,
@@ -674,7 +632,7 @@ function loadNewPiece(id){
             let win = JSON.parse(window.localStorage.getItem('win'));
             if(positions[id]){
                 console.log(`yes I have some data for user of id: ${id} in my local storage\nIt is ${positions[id]}`);
-                PLAYERS[id].win = Number(win[id]);
+                PLAYERS[id].won = Number(win[id]);
                 for(let j=0;j<4;j++){
                     console.log(`19/6/21 for ${id},${j}\nx:${Number(positions[id][j].x)}\ny:${Number(positions[id][j].y)}\npos:${Number(positions[id][j].pos)}`);
                     PLAYERS[id].myPieces[j].x = Number(positions[id][j].x);
@@ -812,4 +770,42 @@ function wait(){
     butt.disabled = true;
     butt.style.opacity =  0.6;
     butt.style.cursor = "not-allowed"
+}
+
+function loadAllPieces(){
+    //Loading all the pieces images
+    function loadImage(src,j){
+        let img = new Image();
+        img.src = src;
+        img.onload = function(){
+            if(MYROOM.length >= 1){
+                //if there's at least one player load the players
+                for(let i=0;i<MYROOM.length;i++){
+                    loadNewPiece(MYROOM[i]);
+                }
+                if(window.localStorage.getItem('room') == room_code){
+                    if(window.localStorage.getItem('started')){
+                        let positions = JSON.parse(window.localStorage.getItem('positions'));
+                        for(let i = 0;i<MYROOM.length;i++){
+                            for(let j=0;j<4;j++){
+                                PLAYERS[MYROOM[i]].myPieces[j].x = Number(positions[MYROOM[i]][j].x);
+                                PLAYERS[MYROOM[i]].myPieces[j].y = Number(positions[MYROOM[i]][j].y);
+                                PLAYERS[MYROOM[i]].myPieces[j].pos = Number(positions[MYROOM[i]][j].pos);
+                            }
+                        }
+                        allPlayerHandler();
+                    }else{allPlayerHandler();}
+                }else{
+                    window.localStorage.clear();
+                    window.localStorage.setItem('room', room_code);
+                    allPlayerHandler();
+                }
+            }
+        }
+        PIECES.push(img);
+    }
+    loadImage('./green_piece.png',0);
+    loadImage('./red_piece.png',1);
+    loadImage('./blue_piece.png',2);
+    loadImage('./yellow_piece.png',3);
 }
