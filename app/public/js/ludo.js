@@ -816,25 +816,6 @@ function allPlayerHandler(){
 //Load a new Player instance
 function loadNewPiece(id){
     PLAYERS[id] = new Player(id);
-    if(window.localStorage.getItem('room') == room_code){
-        console.log('19/6/21 yes I\'m from our room');
-        if(window.localStorage.getItem('started')){
-            //chance = Number(window.localStorage.getItem('chance'));
-            console.log('19/6/21 yes i have already started the game');
-            let positions = JSON.parse(window.localStorage.getItem('positions'));
-            let win = JSON.parse(window.localStorage.getItem('win'));
-            if(positions[id]){
-                console.log(`yes I have some data for user of id: ${id} in my local storage\nIt is ${positions[id]}`);
-                PLAYERS[id].win = Number(win[id]);
-                for(let j=0;j<4;j++){
-                    console.log(`19/6/21 for ${id},${j}\nx:${Number(positions[id][j].x)}\ny:${Number(positions[id][j].y)}\npos:${Number(positions[id][j].pos)}`);
-                    PLAYERS[id].myPieces[j].x = Number(positions[id][j].x);
-                    PLAYERS[id].myPieces[j].y = Number(positions[id][j].y);
-                    PLAYERS[id].myPieces[j].pos = Number(positions[id][j].pos);
-                }
-            }
-        }
-    }
     allPlayerHandler();
 }
 
