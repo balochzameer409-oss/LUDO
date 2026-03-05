@@ -71,7 +71,6 @@ class Piece{
     constructor(i,id){
         this.path = [];
         this.color_id = String(id);
-        console.log(this.color_id,typeof(this.color_id));
         this.Pid = String(i);
         this.pos = -1;
         this.x = parseInt(allPiecesePos[this.color_id][this.Pid].x);
@@ -79,7 +78,6 @@ class Piece{
         this.image = PIECES[this.color_id];
         switch(id){
             case '0':
-                console.log('switch is working');
                 for(let i=0;i<4;i++){this.path.push(this.oneStepToRight)}
                 this.path.push(this.oneStepTowards45);
                 for(let i=0;i<5;i++){this.path.push(this.oneStepToTop)}
@@ -166,8 +164,7 @@ class Piece{
         if(this.pos != -1 && this.pos+num<=56){
 
             for(let i=this.pos;i<this.pos+num;i++){
-                this.path[i](this.color_id,this.Pid);console.log('hemilo selmon')
-            }
+                this.path[i](this.color_id,this.Pid);            }
             this.pos += num;
             if(this.pos ==56){
                 window.PLAYERS[this.color_id].won +=1;
@@ -182,46 +179,38 @@ class Piece{
 
     oneStepToRight(id,pid){
         window.PLAYERS[id].myPieces[pid].x += 50;
-        console.log('to r',this.x,this.y,typeof(this.x),typeof(this.y));
     }
 
     oneStepToLeft(id,pid){
         window.PLAYERS[id].myPieces[pid].x -= 50;
-        console.log('to l',this.x,this.y,typeof(this.x),typeof(this.y));
     }
 
     oneStepToTop(id,pid){
         window.PLAYERS[id].myPieces[pid].y -= 50;
-        console.log('to t',this.x,this.y,typeof(this.x),typeof(this.y));
     }
 
     oneStepToBottom(id,pid){
         window.PLAYERS[id].myPieces[pid].y += 50;
-        console.log('to b',this.x,this.y,typeof(this.x),typeof(this.y));
     }
 
     oneStepTowards45(id,pid){
         window.PLAYERS[id].myPieces[pid].x += 50;
         window.PLAYERS[id].myPieces[pid].y -= 50;
-        console.log('to 45',this.x,this.y,typeof(this.x),typeof(this.y));
     }
 
     oneStepTowards135(id,pid){
         window.PLAYERS[id].myPieces[pid].x -= 50;
         window.PLAYERS[id].myPieces[pid].y -= 50;
-        console.log('to 135',this.x,this.y,typeof(this.x),typeof(this.y));
     }
 
     oneStepTowards225(id,pid){
         window.PLAYERS[id].myPieces[pid].x -= 50;
         window.PLAYERS[id].myPieces[pid].y += 50;
-        console.log('to 225',this.x,this.y,typeof(this.x),typeof(this.y));
     }
 
     oneStepTowards315(id,pid){
         window.PLAYERS[id].myPieces[pid].x += 50;
         window.PLAYERS[id].myPieces[pid].y += 50;
-        console.log('to 315',this.x,this.y,typeof(this.x),typeof(this.y));
     }
 
     kill(){
@@ -232,26 +221,15 @@ class Piece{
 }
 
 socket.on('connect',function(){
-    console.log('You are connected to the server!!');
 
     socket.emit('fetch',room_code,function(data,id){
         MYROOM = data.sort(function(a, b){return a - b});
         for(let i=0;i<MYROOM.length;i++){MYROOM[i] = +MYROOM[i]}
         myid = id;
-        console.log('19/6/21 fetched:',MYROOM,myid,chance);
         StartTheGame();
     });
 
-//To simulate dice
-    if(chance === myid){    
-        document.querySelector('#randomButt').addEventListener('click',function(event){
-        event.preventDefault();
-        if(this.classList.contains('disabled')) return;
-        console.log('19/6/21 randomButt clicked');
-        styleButton(0);
-        diceAction();
-        });
-    }
+
     
     socket.on('imposter',()=>{window.location.replace("/error-imposter");});
 
@@ -280,7 +258,6 @@ socket.on('connect',function(){
                 }
             }
         }
-        window.localStorage.setItem('chance',chance.toString());
     });
 
     socket.on('new-user-joined',function(data){
@@ -306,7 +283,7 @@ socket.on('connect',function(){
 
     socket.on('resume',function(data){
         resume(data.id);
-        data.id==data.click?outputMessage({id:data.id,msg:`Resumed the game without ${USERNAMES[id]}`},5):outputMessage({id:data.click,msg:`${USERNAMES[data.click]} has resumed the game without ${USERNAMES[data.id]}`},5)
+        data.id==data.click?outputMessage({id:data.id,msg:`Resumed the game without ${USERNAMES[data.id]}`},5):outputMessage({id:data.click,msg:`${USERNAMES[data.click]} has resumed the game without ${USERNAMES[data.id]}`},5)
     });
 
     socket.on('wait',function(data){
@@ -331,7 +308,6 @@ socket.on('connect',function(){
     });
 
     socket.on('Thrown-dice',async function(data){
-        console.log(data);
         if(Number(data.id) !== myid){
             // دوسرے player کی گوٹی — slide کرتے ہوئے جائے
             var _fromX = PLAYERS[data.id].myPieces[data.pid].x;
@@ -377,7 +353,6 @@ socket.on('connect',function(){
 
 //To know if the client has disconnected with the server
 socket.on('disconnect', function(){
-    console.log('You are disconnected to the server');
 })
 
 //Output the message through DOM manipulation
@@ -427,11 +402,9 @@ function outputMessage(anObject,k){
 
 //button disabling-enabling
 function styleButton(k){
-    // hidden original (kept for compatibility)
-    let butt = document.getElementById("randomButt")
+    let butt = document.getElementById("randomButt");
     if(k===0){
-        butt.classList.add('disabled');
-        butt.classList.remove('active');
+        if(butt){ butt.classList.add('disabled'); butt.classList.remove('active'); }
         // corner dice: disable MY corner
         let myCorner = document.getElementById('corner-' + myid);
         let myDice   = document.getElementById('dice-'   + myid);
@@ -441,8 +414,7 @@ function styleButton(k){
         if(myCmsg)   myCmsg.textContent = 'Waiting...';
     }
     else if(k===1){
-        butt.classList.remove('disabled');
-        butt.classList.add('active');
+        if(butt){ butt.classList.remove('disabled'); butt.classList.add('active'); }
         // corner dice: activate MY corner, deactivate rest
         for(let i=0;i<4;i++){
             let c = document.getElementById('corner-' + i);
@@ -463,13 +435,7 @@ function styleButton(k){
 
 // Update dice face
 function updateDice(num){
-    // hidden original
-    let dice = document.getElementById("randomButt");
-    dice.classList.add('rolling');
-    setTimeout(()=>{
-        dice.setAttribute('data-num', num);
-        dice.classList.remove('rolling');
-    }, 500);
+
     // corner dice: update MY corner face
     let myDice = document.getElementById('dice-' + myid);
     if(myDice){
@@ -487,7 +453,6 @@ function updateDice(num){
 function diceAction(){
     if(gameOver) return;
     socket.emit('roll-dice',{room:room_code,id:myid},function(num){
-        console.log('19/6/21 dice rolled, got',num);
         if(window.LudoSound) LudoSound.dice();
         updateDice(num);
 
@@ -538,7 +503,6 @@ function diceAction(){
                 }
                 for(let i=0;i<4;i++){
                     if(Xp-PLAYERS[myid].myPieces[i].x<45 && Xp-PLAYERS[myid].myPieces[i].x>0 && Yp-PLAYERS[myid].myPieces[i].y<45 && Yp-PLAYERS[myid].myPieces[i].y>0){
-                        console.log(i,'okokokok');
                         let piece = PLAYERS[myid].myPieces[i];
                         let canMove = spirit.includes(i) && (
                             (piece.pos === -1 && num === 6) ||          // گھر سے نکلے گی
@@ -569,14 +533,12 @@ function diceAction(){
                             playerObj['pos'] = PLAYERS[myid].myPieces[i].pos;
                             playerObj['x']   = toX;
                             playerObj['y']   = toY;
-                            console.log(playerObj);
                             // پہلے kill check کرو — update کے بعد فوری
                             var killed  = iKill(myid, i);
                             var reached = PLAYERS[myid].myPieces[i].pos === 56;
 
                             socket.emit('random', playerObj, function(data){
                                 styleButton(0);
-                                console.log('random acknowledged');
                                 var nextId = (killed || reached) ? myid : chanceRotation(myid, data);
                                 socket.emit('chance',{room: room_code, nxt_id: nextId});
                             });
@@ -606,14 +568,11 @@ function diceAction(){
 
 //Initialise the game with the one who created the room.
 function StartTheGame(){
-    // نئی game — پرانا localStorage صاف کرو
-    window.localStorage.clear();
-    window.localStorage.setItem('room', room_code);
 
     MYROOM.forEach(function(numb){
         numb==myid?outputMessage({Name:'You',id:numb},0):outputMessage({Name:USERNAMES[numb],id:numb},0)
     });
-    document.getElementById('my-name').innerHTML += USERNAMES[myid];console.log(myid); //my-name
+    document.getElementById('my-name').innerHTML += USERNAMES[myid]; //my-name
     let copyText = `\n\nMy room:\n${window.location.href} \nor join the room via\nMy room code:${room_code}`
     document.getElementById('copy').innerHTML += copyText;
     if(MYROOM.length === 1){
@@ -657,7 +616,6 @@ function loadAllPieces(){
                 for(let j=0;j<MYROOM.length;j++){
                     PLAYERS[MYROOM[j]] = new Player(MYROOM[j]);
                 }
-                // صرف موجودہ players لوڈ کرو — localStorage سے کچھ نہیں
                 allPlayerHandler();
             }
         }
@@ -765,25 +723,7 @@ function allPlayerHandler(){
     for(let i=0;i<Object.keys(PLAYERS).length;i++){
         PLAYERS[MYROOM[i]].draw();
     }
-    //Store chance, all 16 pos
-    //a boolean, for if this function has been called atleast once
-    let positions = {}
-    let win = {}
-    for(let i=0;i<MYROOM.length;i++){
-        positions[MYROOM[i]] = {}
-        win[MYROOM[i]] = PLAYERS[MYROOM[i]].win
-        for(let j=0;j<4;j++){
-            positions[MYROOM[i]][j] = {
-                x:PLAYERS[MYROOM[i]].myPieces[j].x,
-                y:PLAYERS[MYROOM[i]].myPieces[j].y,
-                pos:PLAYERS[MYROOM[i]].myPieces[j].pos
-            };
-        }
-    }
-    window.localStorage.setItem('started','true');
-    window.localStorage.setItem('chance',chance.toString());
-    window.localStorage.setItem('positions',JSON.stringify(positions));
-    window.localStorage.setItem('win',JSON.stringify(win));
+
 }
 
 //Load a new Player instance
@@ -845,7 +785,6 @@ function showFinalModal(winnerId) {
     waitingForPieceClick = false;
     _stopBounce();
     styleButton(0);
-    window.localStorage.clear();
     if(window.LudoSound) LudoSound.win();
 
     var modal = document.getElementById('rank-modal');
@@ -934,7 +873,7 @@ function resumeHandler(id){
             id:id,
             click:myid
         },function(){
-            outputMessage({id:myid,msg:`You have resumed the game without ${USERNAMES[id]}`},5);
+            outputMessage({id:myid,msg:`You have resumed the game without ${USERNAMES[data.id || id]}`},5);
             if(chance==id){
                 socket.emit('chance',{room: room_code, nxt_id: chanceRotation(id,0)});
             }
@@ -974,7 +913,8 @@ function resumeHandler(id){
 function resume(id){
     document.getElementById("myModal-2").style.display = "none";
     clearInterval(timer);
-    MYROOM.splice(id,1);
+    let idx = MYROOM.indexOf(Number(id));
+    if(idx !== -1) MYROOM.splice(idx, 1);
     delete PLAYERS[id];
     allPlayerHandler();
 }
