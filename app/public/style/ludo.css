@@ -294,3 +294,120 @@ html, body {
     .gameBoard { width: 500px; max-width: 500px; }
     .msgBoard { width: 100%; max-width: 800px; max-height: 120px; }
 }
+
+/* ── Ranking System ── */
+.rank-modal-content {
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: white;
+    margin: 8% auto;
+    padding: 30px 20px;
+    border: 2px solid gold;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255,215,0,0.4);
+    animation: rankModalIn 0.5s ease;
+}
+
+@keyframes rankModalIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+.rank-trophy {
+    font-size: 60px;
+    animation: trophyBounce 1s ease infinite alternate;
+}
+
+@keyframes trophyBounce {
+    from { transform: translateY(0);    }
+    to   { transform: translateY(-10px);}
+}
+
+.rank-title {
+    font-size: 24px;
+    color: gold;
+    margin: 10px 0 20px;
+    text-shadow: 0 0 10px gold;
+}
+
+.rank-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    margin: 8px 0;
+    background: rgba(255,255,255,0.07);
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.rank-medal { font-size: 28px; }
+
+.rank-player {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.rank-home-btn {
+    margin-top: 20px;
+    background: linear-gradient(135deg, #FFD700, #FF6B35);
+    color: #000;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* notification */
+.rank-notif {
+    position: fixed;
+    top: 20px;
+    right: 16px;
+    background: rgba(15,12,41,0.95);
+    border-radius: 12px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    animation: notifIn 0.4s ease;
+    color: white;
+}
+
+@keyframes notifIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+.rank-notif-hide {
+    animation: notifOut 0.5s ease forwards;
+}
+
+@keyframes notifOut {
+    to { transform: translateX(120%); opacity: 0; }
+}
+
+.rank-medal  { font-size: 26px; }
+.rank-name   { font-size: 16px; font-weight: bold; }
+.rank-txt    { font-size: 13px; color: #ccc; }
+
+/* confetti */
+.confetti-piece {
+    position: fixed;
+    top: -10px;
+    border-radius: 3px;
+    animation: confettiFall linear forwards;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+@keyframes confettiFall {
+    0%   { transform: translateY(0)    rotate(0deg);   opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
