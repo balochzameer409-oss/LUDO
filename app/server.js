@@ -93,25 +93,35 @@ nsp.on('connection',(socket)=>{
         cb(playerObj['num']);
     });
 
+    // ranking track کرنے کے لیے
+    if(!global.rankings) global.rankings = {};
+
     socket.on('WON',(OBJ)=>{
-        // ✅ FIX: data validation اور proper cleanup
         if(!OBJ || !OBJ.room || !rooms[OBJ.room]){
             console.error('❌ Invalid WON data:', OBJ);
             return;
         }
-        
+
         if(!win[OBJ.room]) win[OBJ.room] = {};
-        
+
+        // ranking track کرو
+        if(!global.rankings[OBJ.room]) global.rankings[OBJ.room] = [];
+        let alreadyRanked = global.rankings[OBJ.room].find(r => r.id === OBJ.id);
+        if(!alreadyRanked){
+            global.rankings[OBJ.room].push({ id: OBJ.id, rank: global.rankings[OBJ.room].length + 1 });
+            let rankData = global.rankings[OBJ.room][global.rankings[OBJ.room].length - 1];
+            console.log(`🏆 Rank ${rankData.rank}: Player ${OBJ.id} in room ${OBJ.room}`);
+            // سب کو rank update بھیجو
+            nsp.to(OBJ.room).emit('rank-update', { id: OBJ.id, rank: rankData.rank });
+        }
+
         if(validateWinner(OBJ, socket)){
             let winnerId = OBJ.id;
-            console.log(`🏆 Winner announced: Player ${winnerId} in room ${OBJ.room}`);
-            
-            // صحیح cleanup
+            // cleanup
+            delete global.rankings[OBJ.room];
             delete win[OBJ.room];
             delete NumberOfMembers[OBJ.room];
-            if(rooms[OBJ.room]){
-                delete rooms[OBJ.room];
-            }
+            if(rooms[OBJ.room]) delete rooms[OBJ.room];
             nsp.to(OBJ.room).emit('winner', winnerId);
         }
     });
