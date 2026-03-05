@@ -612,6 +612,10 @@ function diceAction(){
 
 //Initialise the game with the one who created the room.
 function StartTheGame(){
+    // نئی game — پرانا localStorage صاف کرو
+    window.localStorage.clear();
+    window.localStorage.setItem('room', room_code);
+
     MYROOM.forEach(function(numb){
         numb==myid?outputMessage({Name:'You',id:numb},0):outputMessage({Name:USERNAMES[numb],id:numb},0)
     });
