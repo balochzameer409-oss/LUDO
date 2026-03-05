@@ -9,6 +9,8 @@ let myid = -1;
 let chance = Number(-1);
 var PLAYERS = {};
 let waitingForPieceClick = false; // FIX: multiple listeners سے بچاؤ
+let gameOver = false;
+let rankings  = []; // {id, rank}
 let _animSpirit = [];      // bounce animation والی گوٹیاں
 let _animFrame  = null;    // animation frame id
 
@@ -359,8 +361,13 @@ socket.on('connect',function(){
         }
     });
 
+    socket.on('rank-update', function(data){
+        rankings.push({ id: data.id, rank: data.rank });
+        showRankNotif(data.id, data.rank);
+    });
+
     socket.on('winner',function(data){
-        showModal(data);
+        showFinalModal(data);
     })
 
 });
@@ -476,6 +483,7 @@ function updateDice(num){
 
 //simulates the action of dice and also chance rotation.
 function diceAction(){
+    if(gameOver) return;
     socket.emit('roll-dice',{room:room_code,id:myid},function(num){
         console.log('19/6/21 dice rolled, got',num);
         if(window.LudoSound) LudoSound.dice();
@@ -831,13 +839,76 @@ function inAhomeTile(id,pid){
     return false;
 }
 
-function showModal(id){
+// rank notification — ہر بار جب کوئی گھر پہنچے
+function showRankNotif(id, rank) {
+    var medals = ['🥇','🥈','🥉','🏳️'];
+    var medal  = medals[rank - 1] || '🏳️';
+    var color  = ["green","red","blue","yellow"][id];
+    var name   = USERNAMES[id];
+
+    var notif = document.createElement('div');
+    notif.className = 'rank-notif';
+    notif.style.cssText = `border-left: 4px solid ${color};`;
+    notif.innerHTML = `<span class="rank-medal">${medal}</span>
+        <span class="rank-name" style="color:${color}">${name}</span>
+        <span class="rank-txt">${rank === 1 ? 'جیت گیا! 🎉' : rank === 4 ? 'ہار گیا 😢' : `${rank} نمبر`}</span>`;
+    document.body.appendChild(notif);
+
+    // 4 سیکنڈ بعد غائب
+    setTimeout(function(){ notif.classList.add('rank-notif-hide'); }, 3500);
+    setTimeout(function(){ if(notif.parentNode) notif.parentNode.removeChild(notif); }, 4500);
+
+    if(window.LudoSound){ rank === 1 ? LudoSound.win() : LudoSound.move(); }
+}
+
+// آخری modal — مکمل ranking
+function showFinalModal(winnerId) {
+    gameOver = true;
+    waitingForPieceClick = false;
+    _stopBounce();
+    styleButton(0);
     window.localStorage.clear();
     if(window.LudoSound) LudoSound.win();
-    document.getElementById("myModal-1").style.display = "block";
-    document.getElementById("win-win").innerHTML = `The winner is ${USERNAMES[id]}`
 
+    var modal = document.getElementById('rank-modal');
+    var list  = document.getElementById('rank-list');
+    var medals = ['🥇','🥈','🥉','🏳️'];
+    list.innerHTML = '';
+
+    // ranking کے حساب سے sort
+    var sorted = [...rankings].sort(function(a,b){ return a.rank - b.rank; });
+    sorted.forEach(function(r){
+        var color = ["green","red","blue","yellow"][r.id];
+        var li = document.createElement('div');
+        li.className = 'rank-row';
+        li.innerHTML = `<span class="rank-medal">${medals[r.rank-1]||'🏳️'}</span>
+            <span class="rank-player" style="color:${color};text-shadow:0 0 8px ${color}">${USERNAMES[r.id]}</span>`;
+        list.appendChild(li);
+    });
+
+    modal.style.display = 'block';
+
+    // confetti
+    _confetti();
 }
+
+// confetti animation
+function _confetti(){
+    var colors = ['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7'];
+    for(var i = 0; i < 80; i++){
+        (function(i){
+            setTimeout(function(){
+                var c = document.createElement('div');
+                c.className = 'confetti-piece';
+                c.style.cssText = `left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;`;
+                document.body.appendChild(c);
+                setTimeout(function(){ if(c.parentNode) c.parentNode.removeChild(c); }, 4000);
+            }, i * 30);
+        })(i);
+    }
+}
+
+function showModal(id){ showFinalModal(id); }
 
 async function copyhandler() {
     var copyText = document.getElementById("copy").innerHTML;
