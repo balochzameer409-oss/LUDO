@@ -536,8 +536,6 @@ function diceAction(){
                     id: myid,
                     num: num
                 }
-                let alert1 = true;
-
                 for(let i=0;i<4;i++){
                     if(Xp-PLAYERS[myid].myPieces[i].x<45 && Xp-PLAYERS[myid].myPieces[i].x>0 && Yp-PLAYERS[myid].myPieces[i].y<45 && Yp-PLAYERS[myid].myPieces[i].y>0){
                         console.log(i,'okokokok');
@@ -591,15 +589,11 @@ function diceAction(){
                             canvas.removeEventListener('click',clickHandler);
                             waitingForPieceClick = false;
                             return 0;
-                        }else{
-                            alert('Please click on a valid Piece.');
-                            alert1 = false;
-                            break;
-                        }
+                        }// غلط گوٹی — کچھ نہ کرو
                     }
         
                 }
-                if(alert1){alert('You need to click on a piece of your color');}
+                // غلط جگہ — کچھ نہ کرو
             })
         } else {
             // کوئی گوٹی نہیں چل سکتی - اگلے کی باری
@@ -663,29 +657,8 @@ function loadAllPieces(){
                 for(let j=0;j<MYROOM.length;j++){
                     PLAYERS[MYROOM[j]] = new Player(MYROOM[j]);
                 }
-                if(window.localStorage.getItem('room')==room_code){
-                    console.log('19/6/21 yes my localStorage is for this room');
-                    if(window.localStorage.getItem('started')=='true'){
-                        console.log('19/6/21 yes i from this room');
-                        chance = Number(window.localStorage.getItem('chance'));
-                        let positions = JSON.parse(window.localStorage.getItem('positions'));
-                        let win = JSON.parse(window.localStorage.getItem('win'));
-                        for(let i=0;i<MYROOM.length;i++){
-                            PLAYERS[MYROOM[i]].win = Number(MYROOM[i]);
-                            for(let j=0;j<4;j++){
-                                console.log('19/6/21 yes room==room_code && started==true:i,j:',i,j);
-                                PLAYERS[MYROOM[i]].myPieces[j].x = Number(positions[MYROOM[i]][j].x);
-                                PLAYERS[MYROOM[i]].myPieces[j].y = Number(positions[MYROOM[i]][j].y);
-                                PLAYERS[MYROOM[i]].myPieces[j].pos = Number(positions[MYROOM[i]][j].pos);
-                            }
-                        }
-                        allPlayerHandler();
-                    }else{allPlayerHandler();}
-                }else{
-                    window.localStorage.clear();
-                    window.localStorage.setItem('room', room_code);
-                    allPlayerHandler();
-                }
+                // صرف موجودہ players لوڈ کرو — localStorage سے کچھ نہیں
+                allPlayerHandler();
             }
         }
         PIECES.push(img);
