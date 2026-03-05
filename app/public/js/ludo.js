@@ -554,12 +554,14 @@ function diceAction(){
                             playerObj['x']   = toX;
                             playerObj['y']   = toY;
                             console.log(playerObj);
+                            // پہلے kill check کرو — update کے بعد فوری
+                            var killed  = iKill(myid, i);
+                            var reached = PLAYERS[myid].myPieces[i].pos === 56;
+
                             socket.emit('random', playerObj, function(data){
                                 styleButton(0);
                                 console.log('random acknowledged');
-                                // kill ہوئی تو دوبارہ اسی کی باری
-                                var killed = iKill(myid, playerObj['pid']);
-                                var nextId = killed ? myid : chanceRotation(myid, data);
+                                var nextId = (killed || reached) ? myid : chanceRotation(myid, data);
                                 socket.emit('chance',{room: room_code, nxt_id: nextId});
                             });
 
