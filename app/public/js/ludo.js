@@ -501,6 +501,8 @@ function diceAction(){
                 socket.emit('chance',{room: room_code, nxt_id: chanceRotation(myid, 0)});
                 return;
             }
+            // چھکا آیا — پہلے باری confirm کرو، پھر گوٹی چنو
+            outputMessage({msg:'چھکا! دوبارہ باری ملی 🎲', id:myid}, 3);
         } else {
             consecutiveSixes = 0;
         }
@@ -863,18 +865,18 @@ function showRankNotif(id, rank) {
     var medal  = medals[rank - 1] || '🏳️';
     var color  = ["green","red","blue","yellow"][id];
     var name   = USERNAMES[id];
+    var txt    = rank === 1 ? 'پہلا نمبر! 🎉' : rank === 2 ? 'دوسرا نمبر' : rank === 3 ? 'تیسرا نمبر' : 'چوتھا نمبر 😢';
 
+    // چھوٹا notification بیچ میں
     var notif = document.createElement('div');
-    notif.className = 'rank-notif';
-    notif.style.cssText = `border-left: 4px solid ${color};`;
-    notif.innerHTML = `<span class="rank-medal">${medal}</span>
-        <span class="rank-name" style="color:${color}">${name}</span>
-        <span class="rank-txt">${rank === 1 ? 'جیت گیا! 🎉' : rank === 4 ? 'ہار گیا 😢' : `${rank} نمبر`}</span>`;
+    notif.className = 'rank-notif-center';
+    notif.innerHTML = `<span class="rnc-medal">${medal}</span>
+        <span class="rnc-name" style="color:${color}">${name}</span>
+        <span class="rnc-txt">${txt}</span>`;
     document.body.appendChild(notif);
 
-    // 4 سیکنڈ بعد غائب
-    setTimeout(function(){ notif.classList.add('rank-notif-hide'); }, 3500);
-    setTimeout(function(){ if(notif.parentNode) notif.parentNode.removeChild(notif); }, 4500);
+    setTimeout(function(){ notif.classList.add('rnc-hide'); }, 1800);
+    setTimeout(function(){ if(notif.parentNode) notif.parentNode.removeChild(notif); }, 2500);
 
     if(window.LudoSound){ rank === 1 ? LudoSound.win() : LudoSound.move(); }
 }
@@ -891,6 +893,7 @@ function showFinalModal(winnerId) {
     var modal = document.getElementById('rank-modal');
     var list  = document.getElementById('rank-list');
     var medals = ['🥇','🥈','🥉','🏳️'];
+    var rankTxt = ['پہلا نمبر 🎉','دوسرا نمبر','تیسرا نمبر','چوتھا نمبر 😢'];
     list.innerHTML = '';
 
     // ranking کے حساب سے sort
@@ -898,16 +901,20 @@ function showFinalModal(winnerId) {
     sorted.forEach(function(r){
         var color = ["green","red","blue","yellow"][r.id];
         var li = document.createElement('div');
-        li.className = 'rank-row';
+        li.className = 'rank-row rank-row-' + r.rank;
         li.innerHTML = `<span class="rank-medal">${medals[r.rank-1]||'🏳️'}</span>
-            <span class="rank-player" style="color:${color};text-shadow:0 0 8px ${color}">${USERNAMES[r.id]}</span>`;
+            <div class="rank-info">
+                <span class="rank-player" style="color:${color}">${USERNAMES[r.id]}</span>
+                <span class="rank-pos-txt">${rankTxt[r.rank-1]||''}</span>
+            </div>`;
         list.appendChild(li);
     });
 
-    modal.style.display = 'block';
-
-    // confetti
-    _confetti();
+    // 1 سیکنڈ بعد modal دکھاؤ
+    setTimeout(function(){
+        modal.style.display = 'flex';
+        _confetti();
+    }, 1000);
 }
 
 // confetti animation
