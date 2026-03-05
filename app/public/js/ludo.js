@@ -220,20 +220,10 @@ class Piece{
     }
 }
 
-socket.on('connect',function(){
+// ── سب socket listeners connect سے باہر ── ghost fix ✅
+socket.on('imposter',()=>{window.location.replace("/error-imposter");});
 
-    socket.emit('fetch',room_code,function(data,id){
-        MYROOM = data.sort(function(a, b){return a - b});
-        for(let i=0;i<MYROOM.length;i++){MYROOM[i] = +MYROOM[i]}
-        myid = id;
-        StartTheGame();
-    });
-
-
-    
-    socket.on('imposter',()=>{window.location.replace("/error-imposter");});
-
-    socket.on('is-it-your-chance',function(data){
+socket.on('is-it-your-chance',function(data){
         waitingForPieceClick = false; // نئی باری - پرانی listener reset
         consecutiveSixes = 0; // نئی باری پر reset
         chance = Number(data); // پہلے chance update کرو
@@ -346,10 +336,16 @@ socket.on('connect',function(){
 
     socket.on('winner',function(data){
         showFinalModal(data);
-    })
+    });
 
+socket.on('connect',function(){
+    socket.emit('fetch',room_code,function(data,id){
+        MYROOM = data.sort(function(a, b){return a - b});
+        for(let i=0;i<MYROOM.length;i++){MYROOM[i] = +MYROOM[i]}
+        myid = id;
+        StartTheGame();
+    });
 });
-
 
 //To know if the client has disconnected with the server
 socket.on('disconnect', function(){
@@ -488,7 +484,7 @@ function diceAction(){
             if(waitingForPieceClick) return;
             waitingForPieceClick = true;
             _startBounce(spirit); // bounce animation شروع
-            outputMessage('Click on a piece',3)
+            outputMessage({msg:'گوٹی پر کلک کریں!', id:myid},3)
             canvas.addEventListener('click',function clickHandler(e){
                 let rect = e.target.getBoundingClientRect();
                 // موبائل پر canvas CSS سے چھوٹا ہوتا ہے - scale factor لگاؤ
@@ -748,13 +744,15 @@ function iKill(id,pid){
 }
 
 function inAhomeTile(id,pid){
-    for(let i=0;i<4;i++){
-        if((PLAYERS[id].myPieces[pid].x == homeTilePos[i][0].x && PLAYERS[id].myPieces[pid].y == homeTilePos[i][0].y) || (PLAYERS[id].myPieces[pid].x == homeTilePos[i][1].x && PLAYERS[id].myPieces[pid].y == homeTilePos[i][1].y)){
-            return true;
-        }
-    }
-
-    return false;
+    const safeTiles = [
+        {x:50,  y:300}, {x:300, y:100},
+        {x:400, y:50},  {x:600, y:300},
+        {x:650, y:400}, {x:400, y:600},
+        {x:300, y:650}, {x:100, y:400}
+    ];
+    let px = PLAYERS[id].myPieces[pid].x;
+    let py = PLAYERS[id].myPieces[pid].y;
+    return safeTiles.some(t => t.x === px && t.y === py);
 }
 
 // rank notification — ہر بار جب کوئی گھر پہنچے
@@ -873,7 +871,7 @@ function resumeHandler(id){
             id:id,
             click:myid
         },function(){
-            outputMessage({id:myid,msg:`You have resumed the game without ${USERNAMES[data.id || id]}`},5);
+            outputMessage({id:myid,msg:`You have resumed the game without ${USERNAMES[id]}`},5);
             if(chance==id){
                 socket.emit('chance',{room: room_code, nxt_id: chanceRotation(id,0)});
             }
