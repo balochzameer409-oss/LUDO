@@ -169,11 +169,12 @@ nsp.on('connection',(socket)=>{
 function generate_member_id(s_id, rc){
     if(Object.keys(rooms[rc]).length >= 4) return -1;
 
-    // خالی جگہ سیدھا ڈھونڈو
-    for(let i = 0; i < 4; i++){
-        if(!rooms[rc][i]){
-            rooms[rc][i] = {sid: s_id, num: 0};
-            return i;
+    // ترتیب: Yellow(3) → Red(1) → Blue(2) → Green(0)
+    const order = [3, 1, 2, 0];
+    for(let i = 0; i < order.length; i++){
+        if(!rooms[rc][order[i]]){
+            rooms[rc][order[i]] = {sid: s_id, num: 0};
+            return order[i];
         }
     }
     return -1;
