@@ -11,6 +11,7 @@ var PLAYERS = {};
 let waitingForPieceClick = false; // FIX: multiple listeners سے بچاؤ
 let gameOver = false;
 let rankings  = []; // {id, rank}
+let consecutiveSixes = 0; // لگاتار چھکے گنو
 let _animSpirit = [];      // bounce animation والی گوٹیاں
 let _animFrame  = null;    // animation frame id
 
@@ -256,6 +257,7 @@ socket.on('connect',function(){
 
     socket.on('is-it-your-chance',function(data){
         waitingForPieceClick = false; // نئی باری - پرانی listener reset
+        consecutiveSixes = 0; // نئی باری پر reset
         chance = Number(data); // پہلے chance update کرو
         if(Number(data) === Number(myid)){
             styleButton(1);
@@ -488,6 +490,20 @@ function diceAction(){
         console.log('19/6/21 dice rolled, got',num);
         if(window.LudoSound) LudoSound.dice();
         updateDice(num);
+
+        // تین لگاتار چھکے چیک کریں
+        if(num === 6){
+            consecutiveSixes++;
+            if(consecutiveSixes >= 3){
+                consecutiveSixes = 0;
+                outputMessage({msg:'تین چھکے! باری ختم', id:myid}, 5);
+                styleButton(0);
+                socket.emit('chance',{room: room_code, nxt_id: chanceRotation(myid, 0)});
+                return;
+            }
+        } else {
+            consecutiveSixes = 0;
+        }
         // BUG FIX 3: spirit includes movable pieces
         // - pos>-1: گوٹی باہر ہے اور آگے جا سکتی ہے
         // - pos==-1 && num==6: گوٹی گھر میں ہے، چھکے سے نکل سکتی ہے
