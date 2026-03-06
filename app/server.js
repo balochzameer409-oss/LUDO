@@ -48,6 +48,15 @@ nsp.on('connection',(socket)=>{
                 delete socketToRoomMap[socket.id];
             }
 
+            // ✅ FIX: اگر یہ socket پہلے سے اسی room میں موجود ہے تو دوبارہ id نہ دو
+            let existingId = Object.keys(rooms[data]).find(k => rooms[data][k].sid === socket.id);
+            if(existingId !== undefined){
+                socketToRoomMap[socket.id] = {room: data, id: existingId};
+                socket.join(data);
+                cb(Object.keys(rooms[data]), Number(existingId));
+                return;
+            }
+
             let member_id = generate_member_id(socket.id,data);
             socket.join(data);
             if(member_id !== -1){
