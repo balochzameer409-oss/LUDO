@@ -1,8 +1,7 @@
 let socket = io('/ludo', {
-    reconnection: false,
-    transports: ['websocket'],  // صرف WebSocket - polling بند
-    upgrade: false
+    reconnection: false
 });
+let _fetchDone = false;
 
 const room_code = window.location.href.substring(window.location.href.length-6)
 const USERNAMES = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
@@ -18,7 +17,6 @@ let rankings  = []; // {id, rank}
 let consecutiveSixes = 0; // لگاتار چھکے گنو
 let _animSpirit = [];      // bounce animation والی گوٹیاں
 let _animFrame  = null;    // animation frame id
-let _fetchDone  = false;   // ghost fix
 
 var canvas = document.getElementById('theCanvas');
 var ctx = canvas.getContext('2d');
@@ -256,7 +254,6 @@ socket.on('is-it-your-chance',function(data){
     });
 
     socket.on('new-user-joined',function(data){
-        if(data.id === myid) return; // اپنا event ignore کرو - ghost fix
         MYROOM.push(data.id);
         MYROOM = [...(new Set(MYROOM))];
         MYROOM.sort(function(a, b){return a - b});
@@ -577,6 +574,7 @@ function StartTheGame(){
         numb==myid?outputMessage({Name:'You',id:numb},0):outputMessage({Name:USERNAMES[numb],id:numb},0)
     });
     document.getElementById('my-name').innerHTML += USERNAMES[myid]; //my-name
+    if(typeof initShare === 'function') initShare();
     let copyText = `\n\nMy room:\n${window.location.href} \nor join the room via\nMy room code:${room_code}`
     document.getElementById('copy').innerHTML += copyText;
     if(MYROOM.length === 1){
