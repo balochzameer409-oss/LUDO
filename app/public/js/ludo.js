@@ -1,5 +1,7 @@
 let socket = io('/ludo', {
-    reconnection: false
+    reconnection: false,
+    transports: ['websocket'],  // صرف WebSocket - polling بند
+    upgrade: false
 });
 
 const room_code = window.location.href.substring(window.location.href.length-6)
