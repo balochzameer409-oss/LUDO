@@ -1,4 +1,6 @@
-let socket = io('/ludo');
+let socket = io('/ludo', {
+    reconnection: false
+});
 
 const room_code = window.location.href.substring(window.location.href.length-6)
 const USERNAMES = ['Green Warrior', 'Red Fire', 'Blue Fox', 'Yellow Rhino'];
