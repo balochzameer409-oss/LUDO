@@ -2,22 +2,18 @@ const {join} = require('path');
 const express = require('express');
 const {createServer} = require('http');
 const socketIO = require('socket.io');
- 
+
 const {PORT} = require('./config/config');
 
 const rootRouter = require('./routes/rootRouter')
 const ludoRouter = require('./routes/ludoRouter')
 
 let {rooms,NumberOfMembers,win} = require('./models/model');
-let socketToRoomMap = {}; // socket → {room, id} tracking
+let socketToRoomMap = {};
 
 const app = express();
 const server = createServer(app);
-const io = socketIO(server, {
-    cors: {
-      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost'],
-      credentials: true
-    }});
+const io = socketIO(server);
 
 app.use(express.static(join(__dirname, 'public/')));
 app.use(express.urlencoded({ extended: true }));
@@ -27,6 +23,7 @@ let nsp = io.of('/ludo');
 
 nsp.on('connection',(socket)=>{
     console.log('A User has connected to the game');
+
     socket.on('fetch',(data,cb)=>{
         try{
             if(!data || typeof data !== 'string' || !rooms[data]){
@@ -34,11 +31,9 @@ nsp.on('connection',(socket)=>{
                 return;
             }
 
-            // ✅ KEY FIX: پہلے چیک کرو - کیا یہ socket اسی room میں پہلے سے ہے؟
-            // یہ check پہلے ہونا ضروری ہے - ورنہ نیچے والا code Yellow delete کر دیتا ہے
+            // پہلے چیک کرو - کیا یہ socket اسی room میں پہلے سے ہے؟
             let existingId = Object.keys(rooms[data]).find(k => rooms[data][k].sid === socket.id);
             if(existingId !== undefined){
-                // دوبارہ fetch آیا - وہی id واپس کرو، کچھ delete مت کرو
                 socketToRoomMap[socket.id] = {room: data, id: existingId};
                 socket.join(data);
                 cb(Object.keys(rooms[data]), Number(existingId));
@@ -73,14 +68,14 @@ nsp.on('connection',(socket)=>{
 
     socket.on('roll-dice',(data,cb)=>{
         if(!data || !data.room || !rooms[data.room] || !rooms[data.room][data.id]){
-            console.error('❌ Invalid dice roll data:', data);
+            console.error('Invalid dice roll data:', data);
             return;
         }
         rooms[data.room][data.id]['num'] = Math.floor((Math.random()*6) + 1);
-        data['num'] = rooms[data.room][data.id]['num']
+        data['num'] = rooms[data.room][data.id]['num'];
         nsp.to(data.room).emit('rolled-dice',data);
         cb(rooms[data.room][data.id]['num']);
-    })
+    });
 
     socket.on('chance',(data)=>{
         nsp.to(data.room).emit('is-it-your-chance', Number(data.nxt_id));
@@ -88,13 +83,13 @@ nsp.on('connection',(socket)=>{
 
     socket.on('random',(playerObj,cb)=>{
         if(!playerObj || !playerObj.room || !rooms[playerObj.room] || !rooms[playerObj.room][playerObj.id]){
-            console.error('❌ Invalid random data:', playerObj);
+            console.error('Invalid random data:', playerObj);
             return;
         }
         if(playerObj['num'] != rooms[playerObj.room][playerObj.id]['num']){
-            console.log('⚠️ Someone is trying to cheat!', playerObj.id);
+            console.log('Someone is trying to cheat!', playerObj.id);
         }
-        playerObj['num'] = rooms[playerObj.room][playerObj.id]['num']
+        playerObj['num'] = rooms[playerObj.room][playerObj.id]['num'];
         nsp.to(playerObj.room).emit('Thrown-dice', playerObj);
         cb(playerObj['num']);
     });
@@ -102,19 +97,14 @@ nsp.on('connection',(socket)=>{
     if(!global.rankings) global.rankings = {};
 
     socket.on('WON',(OBJ)=>{
-        if(!OBJ || !OBJ.room || !rooms[OBJ.room]){
-            console.error('❌ Invalid WON data:', OBJ);
-            return;
-        }
-
+        if(!OBJ || !OBJ.room || !rooms[OBJ.room]) return;
         if(!win[OBJ.room]) win[OBJ.room] = {};
-
         if(!global.rankings[OBJ.room]) global.rankings[OBJ.room] = [];
+
         let alreadyRanked = global.rankings[OBJ.room].find(r => r.id === OBJ.id);
         if(!alreadyRanked){
             global.rankings[OBJ.room].push({ id: OBJ.id, rank: global.rankings[OBJ.room].length + 1 });
             let rankData = global.rankings[OBJ.room][global.rankings[OBJ.room].length - 1];
-            console.log(`🏆 Rank ${rankData.rank}: Player ${OBJ.id} in room ${OBJ.room}`);
             nsp.to(OBJ.room).emit('rank-update', { id: OBJ.id, rank: rankData.rank });
         }
 
@@ -129,10 +119,7 @@ nsp.on('connection',(socket)=>{
     });
 
     socket.on('resume',(data,cb)=>{
-        if(!data || !data.room){
-            console.error('❌ Invalid resume data');
-            return;
-        }
+        if(!data || !data.room) return;
         socket.to(data.room).emit('resume',data);
         if(NumberOfMembers[data.room]){
             NumberOfMembers[data.room].members = NumberOfMembers[data.room].members <= 2 ? 2 : NumberOfMembers[data.room].members - 1;
@@ -142,10 +129,7 @@ nsp.on('connection',(socket)=>{
     });
 
     socket.on('wait',(data,cb)=>{
-        if(!data || !data.room){
-            console.error('❌ Invalid wait data');
-            return;
-        }
+        if(!data || !data.room) return;
         socket.to(data.room).emit('wait',data);
         cb();
     });
@@ -169,8 +153,6 @@ nsp.on('connection',(socket)=>{
 
 function generate_member_id(s_id, rc){
     if(Object.keys(rooms[rc]).length >= 4) return -1;
-
-    // ترتیب: Yellow(3) → Red(1) → Blue(2) → Green(0)
     const order = [3, 1, 2, 0];
     for(let i = 0; i < order.length; i++){
         if(!rooms[rc][order[i]]){
@@ -183,30 +165,17 @@ function generate_member_id(s_id, rc){
 
 function validateWinner(OBJ, socket){
     if(!win[OBJ.room]) win[OBJ.room] = {};
-    
     let reportKey = OBJ.reportedBy !== undefined ? OBJ.reportedBy : OBJ.player;
     win[OBJ.room][reportKey] = {o: OBJ, s: socket.id};
-    
     let roomPlayers = Object.keys(rooms[OBJ.room] || {});
     let reportCount = Object.keys(win[OBJ.room]).length;
-    
-    if(reportCount < roomPlayers.length) {
-        console.log(`⏳ Waiting for winner confirmation: ${reportCount}/${roomPlayers.length} reports`);
-        return false;
-    }
-    
+    if(reportCount < roomPlayers.length) return false;
     let winnerId = null;
     for(let key in win[OBJ.room]){
         let currentWinnerId = win[OBJ.room][key].o.id;
-        if(winnerId === null){
-            winnerId = currentWinnerId;
-        } else if(winnerId !== currentWinnerId){
-            console.error('❌ Conflicting winner reports!');
-            return false;
-        }
+        if(winnerId === null) winnerId = currentWinnerId;
+        else if(winnerId !== currentWinnerId) return false;
     }
-    
-    console.log(`✅ Winner validated: ${winnerId}`);
     return true;
 }
 
