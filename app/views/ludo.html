@@ -25,24 +25,35 @@
         <a href="">HOME</a>
         <a href="">LUDO</a>
         <a href="about">ABOUT</a>
-        <div class="copy-wrapper">
-            <h3 id="my-name" onclick="copy(event)">&#10024;  </h3>
-            <div class="copy-content">
-                <h3>Invite your friends!</h3>
-                <textarea id="copy" cols="30" rows="6">Hey dude let's play a LUDO match &#x1f3b2;</textarea><br>
-                <div class="tooltip">
-                    <button id="copy-btn" onclick="copyhandler()" onmouseout="outFunc()">
-                        <span class="tooltiptext" id="myTooltip">copy to clipboard</span>
-                        <img src="../images/icons/clipboard.png" alt="COPY" style="height: 20px; width: 18px;">
-                    </button>
-                </div>
-                <div class="tooltip">
-                    <button id="copy-btn" onclick="copyhandlerLink()" onmouseout="outFuncLink()">
-                        <span class="tooltiptext" id="myTooltipLink">copy room link to the clipboard</span>
-                        <img src="../images/icons/copy-link.png" alt="COPY" style="height: 20px; width: 18px;">
-                    </button>
-                </div>
+        <button class="share-nav-btn" onclick="document.getElementById('share-modal').style.display='flex'">🔗 Share</button>
+    </div>
+
+    <!-- JS کے لیے hidden - ضروری ہیں -->
+    <div style="display:none">
+        <h3 id="my-name"></h3>
+        <textarea id="copy"></textarea>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="modal" style="display:none; justify-content:center; align-items:center;">
+        <div class="share-box">
+            <div class="share-header">
+                <span>🎲 دوستوں کو دعوت دیں!</span>
+                <button class="share-close" onclick="document.getElementById('share-modal').style.display='none'">✕</button>
             </div>
+            <div class="share-code-section">
+                <div class="share-code-label">ROOM CODE</div>
+                <div class="share-code" id="share-room-code">------</div>
+                <button class="share-copy-code" onclick="shareAction('code')">📋 Copy Code</button>
+            </div>
+            <div class="share-or">— یا —</div>
+            <div class="share-code-label">ROOM LINK</div>
+            <div class="share-link" id="share-link-text"></div>
+            <div class="share-btns">
+                <button class="share-btn-link" onclick="shareAction('link')">🔗 Copy Link</button>
+                <button class="share-btn-wa" onclick="shareAction('whatsapp')">💬 WhatsApp</button>
+            </div>
+            <div class="share-msg" id="share-msg"></div>
         </div>
     </div>
 
@@ -152,6 +163,33 @@
         </div>
     </div>
 
+    <script>
+    function shareAction(type) {
+        var code = window.location.href.slice(-6);
+        var link = window.location.href;
+        var msg  = document.getElementById('share-msg');
+        if (type === 'code') {
+            navigator.clipboard.writeText(code);
+            msg.textContent = '✅ Code copy ہو گیا!';
+        } else if (type === 'link') {
+            navigator.clipboard.writeText(link);
+            msg.textContent = '✅ Link copy ہو گیا!';
+        } else if (type === 'whatsapp') {
+            var text = 'چلو Ludo کھیلتے ہیں! 🎲\nRoom Code: ' + code + '\n' + link;
+            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+        }
+        if (msg) setTimeout(function(){ msg.textContent = ''; }, 2000);
+    }
+    function initShare() {
+        var code = window.location.href.slice(-6);
+        var el = document.getElementById('share-room-code');
+        var lk = document.getElementById('share-link-text');
+        if (el) el.textContent = code;
+        if (lk) lk.textContent = window.location.href;
+        // modal خود بخود کھلے
+        document.getElementById('share-modal').style.display = 'flex';
+    }
+    </script>
     <script src="../js/ludo-sound.js"></script>
     <script src='../../socket.io/socket.io.js'></script>
     <script src="../js/ludo.js"></script>
