@@ -16,7 +16,7 @@ let rankings  = []; // {id, rank}
 let consecutiveSixes = 0; // لگاتار چھکے گنو
 let _animSpirit = [];      // bounce animation والی گوٹیاں
 let _animFrame  = null;    // animation frame id
-let _fetchDone  = false;   // ghost fix: fetch صرف ایک بار
+let _fetchDone  = false;   // ghost fix
 
 var canvas = document.getElementById('theCanvas');
 var ctx = canvas.getContext('2d');
@@ -254,6 +254,7 @@ socket.on('is-it-your-chance',function(data){
     });
 
     socket.on('new-user-joined',function(data){
+        if(data.id === myid) return; // اپنا event ignore کرو - ghost fix
         MYROOM.push(data.id);
         MYROOM = [...(new Set(MYROOM))];
         MYROOM.sort(function(a, b){return a - b});
@@ -342,7 +343,7 @@ socket.on('is-it-your-chance',function(data){
     });
 
 socket.on('connect',function(){
-    if(_fetchDone) return; // دوسری بار connect ہو تو ignore کرو
+    if(_fetchDone) return;
     _fetchDone = true;
     socket.emit('fetch',room_code,function(data,id){
         MYROOM = data.sort(function(a, b){return a - b});
