@@ -15,7 +15,6 @@ const app = express();
 const server = createServer(app);
 const io = socketIO(server, {
     cors: {
-      // ✅ FIX: CORS کو محدود کریں
       origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost'],
       credentials: true
     }});
@@ -24,9 +23,6 @@ app.use(express.static(join(__dirname, 'public/')));
 app.use(express.urlencoded({ extended: true }));
 app.enable('trust proxy');
 
-//
-///sockets
-//
 let nsp = io.of('/ludo');
 
 nsp.on('connection',(socket)=>{
@@ -38,7 +34,18 @@ nsp.on('connection',(socket)=>{
                 return;
             }
 
-            // اگر یہ socket پہلے سے کسی room میں ہے تو پہلے ہٹاؤ
+            // ✅ KEY FIX: پہلے چیک کرو - کیا یہ socket اسی room میں پہلے سے ہے؟
+            // یہ check پہلے ہونا ضروری ہے - ورنہ نیچے والا code Yellow delete کر دیتا ہے
+            let existingId = Object.keys(rooms[data]).find(k => rooms[data][k].sid === socket.id);
+            if(existingId !== undefined){
+                // دوبارہ fetch آیا - وہی id واپس کرو، کچھ delete مت کرو
+                socketToRoomMap[socket.id] = {room: data, id: existingId};
+                socket.join(data);
+                cb(Object.keys(rooms[data]), Number(existingId));
+                return;
+            }
+
+            // نئے room میں جا رہا ہے تو پرانا ہٹاؤ
             if(socketToRoomMap[socket.id]){
                 let {room: oldRoom, id: oldId} = socketToRoomMap[socket.id];
                 if(rooms[oldRoom] && rooms[oldRoom][oldId]){
@@ -46,15 +53,6 @@ nsp.on('connection',(socket)=>{
                 }
                 socket.leave(oldRoom);
                 delete socketToRoomMap[socket.id];
-            }
-
-            // ✅ FIX: اگر یہ socket پہلے سے اسی room میں موجود ہے تو دوبارہ id نہ دو
-            let existingId = Object.keys(rooms[data]).find(k => rooms[data][k].sid === socket.id);
-            if(existingId !== undefined){
-                socketToRoomMap[socket.id] = {room: data, id: existingId};
-                socket.join(data);
-                cb(Object.keys(rooms[data]), Number(existingId));
-                return;
             }
 
             let member_id = generate_member_id(socket.id,data);
@@ -74,12 +72,10 @@ nsp.on('connection',(socket)=>{
     });
 
     socket.on('roll-dice',(data,cb)=>{
-        // ✅ FIX: data validation
         if(!data || !data.room || !rooms[data.room] || !rooms[data.room][data.id]){
             console.error('❌ Invalid dice roll data:', data);
             return;
         }
-        
         rooms[data.room][data.id]['num'] = Math.floor((Math.random()*6) + 1);
         data['num'] = rooms[data.room][data.id]['num']
         nsp.to(data.room).emit('rolled-dice',data);
@@ -87,23 +83,14 @@ nsp.on('connection',(socket)=>{
     })
 
     socket.on('chance',(data)=>{
-        // nxt_id کو number میں convert کرکے بھیجو - type mismatch سے بچاؤ
         nsp.to(data.room).emit('is-it-your-chance', Number(data.nxt_id));
     });
 
     socket.on('random',(playerObj,cb)=>{
-        // ✅ FIX: data validation پہلے
         if(!playerObj || !playerObj.room || !rooms[playerObj.room] || !rooms[playerObj.room][playerObj.id]){
             console.error('❌ Invalid random data:', playerObj);
             return;
         }
-        
-        // playerObj ={
-        //     room: room_code,
-        //     id: myid,
-        //     pid: pid,
-        //     num: temp
-        // }
         if(playerObj['num'] != rooms[playerObj.room][playerObj.id]['num']){
             console.log('⚠️ Someone is trying to cheat!', playerObj.id);
         }
@@ -112,7 +99,6 @@ nsp.on('connection',(socket)=>{
         cb(playerObj['num']);
     });
 
-    // ranking track کرنے کے لیے
     if(!global.rankings) global.rankings = {};
 
     socket.on('WON',(OBJ)=>{
@@ -123,20 +109,17 @@ nsp.on('connection',(socket)=>{
 
         if(!win[OBJ.room]) win[OBJ.room] = {};
 
-        // ranking track کرو
         if(!global.rankings[OBJ.room]) global.rankings[OBJ.room] = [];
         let alreadyRanked = global.rankings[OBJ.room].find(r => r.id === OBJ.id);
         if(!alreadyRanked){
             global.rankings[OBJ.room].push({ id: OBJ.id, rank: global.rankings[OBJ.room].length + 1 });
             let rankData = global.rankings[OBJ.room][global.rankings[OBJ.room].length - 1];
             console.log(`🏆 Rank ${rankData.rank}: Player ${OBJ.id} in room ${OBJ.room}`);
-            // سب کو rank update بھیجو
             nsp.to(OBJ.room).emit('rank-update', { id: OBJ.id, rank: rankData.rank });
         }
 
         if(validateWinner(OBJ, socket)){
             let winnerId = OBJ.id;
-            // cleanup
             delete global.rankings[OBJ.room];
             delete win[OBJ.room];
             delete NumberOfMembers[OBJ.room];
@@ -146,12 +129,10 @@ nsp.on('connection',(socket)=>{
     });
 
     socket.on('resume',(data,cb)=>{
-        // ✅ FIX: data validation
         if(!data || !data.room){
             console.error('❌ Invalid resume data');
             return;
         }
-        
         socket.to(data.room).emit('resume',data);
         if(NumberOfMembers[data.room]){
             NumberOfMembers[data.room].members = NumberOfMembers[data.room].members <= 2 ? 2 : NumberOfMembers[data.room].members - 1;
@@ -175,7 +156,6 @@ nsp.on('connection',(socket)=>{
             if(rooms[room] && rooms[room][id]){
                 delete rooms[room][id];
                 socket.to(room).emit('user-disconnected', id);
-                // خالی room صاف کرو
                 if(Object.keys(rooms[room]).length === 0){
                     delete rooms[room];
                     if(win[room]) delete win[room];
@@ -187,12 +167,6 @@ nsp.on('connection',(socket)=>{
     });
 });
 
-
-//
-///CUSTOM FUNCTIONS
-//
-
-//to randomise the color a player can get when he 'fetch'es.
 function generate_member_id(s_id, rc){
     if(Object.keys(rooms[rc]).length >= 4) return -1;
 
@@ -207,26 +181,20 @@ function generate_member_id(s_id, rc){
     return -1;
 }
 
-
-
-// ✅ FIX: بہتر winner validation
 function validateWinner(OBJ, socket){
     if(!win[OBJ.room]) win[OBJ.room] = {};
     
-    // ✅ FIX: OBJ.reportedBy یا OBJ.player - واضح ہونا چاہیے
     let reportKey = OBJ.reportedBy !== undefined ? OBJ.reportedBy : OBJ.player;
     win[OBJ.room][reportKey] = {o: OBJ, s: socket.id};
     
     let roomPlayers = Object.keys(rooms[OBJ.room] || {});
     let reportCount = Object.keys(win[OBJ.room]).length;
     
-    // سب players نے report کیا؟
     if(reportCount < roomPlayers.length) {
         console.log(`⏳ Waiting for winner confirmation: ${reportCount}/${roomPlayers.length} reports`);
         return false;
     }
     
-    // سب کا winner ID ایک ہی ہونا چاہیے
     let winnerId = null;
     for(let key in win[OBJ.room]){
         let currentWinnerId = win[OBJ.room][key].o.id;
@@ -242,9 +210,6 @@ function validateWinner(OBJ, socket){
     return true;
 }
 
-//
-///Routes management
-//
 app.use('/', rootRouter);
 app.use('/ludo', ludoRouter);
 app.use(function (req, res) {
