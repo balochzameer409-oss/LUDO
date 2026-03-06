@@ -25,32 +25,24 @@
         <a href="">HOME</a>
         <a href="">LUDO</a>
         <a href="about">ABOUT</a>
-        <h3 id="my-name">&#10024; </h3>
-        <button class="share-nav-btn" id="share-nav-btn" onclick="document.getElementById('share-modal').style.display='flex'" title="Share Room">
-            🔗
-        </button>
-    </div>
-
-    <!-- Share Modal -->
-    <div id="share-modal" class="modal share-modal-overlay">
-        <div class="share-modal-box">
-            <div class="share-modal-header">
-                <span>🎲 دوستوں کو دعوت دیں!</span>
-                <button class="share-close-btn" onclick="document.getElementById('share-modal').style.display='none'">✕</button>
+        <div class="copy-wrapper">
+            <h3 id="my-name" onclick="copy(event)">&#10024;  </h3>
+            <div class="copy-content">
+                <h3>Invite your friends!</h3>
+                <textarea id="copy" cols="30" rows="6">Hey dude let's play a LUDO match &#x1f3b2;</textarea><br>
+                <div class="tooltip">
+                    <button id="copy-btn" onclick="copyhandler()" onmouseout="outFunc()">
+                        <span class="tooltiptext" id="myTooltip">copy to clipboard</span>
+                        <img src="../images/icons/clipboard.png" alt="COPY" style="height: 20px; width: 18px;">
+                    </button>
+                </div>
+                <div class="tooltip">
+                    <button id="copy-btn" onclick="copyhandlerLink()" onmouseout="outFuncLink()">
+                        <span class="tooltiptext" id="myTooltipLink">copy room link to the clipboard</span>
+                        <img src="../images/icons/copy-link.png" alt="COPY" style="height: 20px; width: 18px;">
+                    </button>
+                </div>
             </div>
-            <div class="share-room-code-wrap">
-                <div class="share-label">Room Code</div>
-                <div class="share-room-code" id="share-room-code">------</div>
-                <button class="share-copy-code-btn" onclick="copyRoomCode()">📋 Copy Code</button>
-            </div>
-            <div class="share-divider">یا</div>
-            <div class="share-label">Room Link</div>
-            <div class="share-link-box" id="share-link-box"></div>
-            <div class="share-btns-row">
-                <button class="share-btn-copy" onclick="copyRoomLink()">🔗 Copy Link</button>
-                <button class="share-btn-whatsapp" onclick="shareWhatsApp()">💬 WhatsApp</button>
-            </div>
-            <div class="share-copied-msg" id="share-copied-msg"></div>
         </div>
     </div>
 
