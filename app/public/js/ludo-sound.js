@@ -1,6 +1,7 @@
 var LudoSound = (function () {
 
-    // آوازوں کو پہلے سے load کریں
+    var _unlocked = false;
+
     var _sounds = {
         dice:     new Audio('../sounds/dice.mp3'),
         move:     new Audio('../sounds/move.mp3'),
@@ -10,7 +11,6 @@ var LudoSound = (function () {
         gameOver: new Audio('../sounds/game-over.mp3')
     };
 
-    // volume set کریں
     _sounds.dice.volume     = 0.8;
     _sounds.move.volume     = 0.6;
     _sounds.kill.volume     = 1.0;
@@ -21,7 +21,8 @@ var LudoSound = (function () {
     function _play(sound) {
         try {
             sound.currentTime = 0;
-            sound.play().catch(function(e) {
+            var p = sound.play();
+            if (p && p.catch) p.catch(function(e) {
                 console.log('Sound error:', e);
             });
         } catch(e) {
@@ -29,8 +30,27 @@ var LudoSound = (function () {
         }
     }
 
+    // پہلے touch/click پر سب sounds کو 0 volume پر play کرو
+    // تاکہ browser unlock ہو اور بعد میں sounds چلیں
     function unlock() {
-        Object.values(_sounds).forEach(function(s) { s.load(); });
+        if (_unlocked) return;
+        _unlocked = true;
+        Object.values(_sounds).forEach(function(s) {
+            var origVol = s.volume;
+            s.volume = 0;
+            var p = s.play();
+            if (p && p.then) {
+                p.then(function() {
+                    s.pause();
+                    s.currentTime = 0;
+                    s.volume = origVol;
+                }).catch(function(){
+                    s.volume = origVol;
+                });
+            } else {
+                s.volume = origVol;
+            }
+        });
     }
 
     function dice()     { _play(_sounds.dice);     }
