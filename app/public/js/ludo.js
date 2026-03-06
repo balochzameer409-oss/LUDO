@@ -253,6 +253,7 @@ socket.on('is-it-your-chance',function(data){
     });
 
     socket.on('new-user-joined',function(data){
+        if(data.id === myid) return; // اپنا event ignore کرو - ghost fix
         MYROOM.push(data.id);
         MYROOM = [...(new Set(MYROOM))];
         MYROOM.sort(function(a, b){return a - b});
