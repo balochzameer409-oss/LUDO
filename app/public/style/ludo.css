@@ -35,13 +35,13 @@ html, body {
 }
 
 #my-name {
-    float: right;
+    position: absolute;
+    right: 2px;
     color: #f2f2f2;
-    padding: 4px 8px;
-    font-size: 13px;
+    padding: 8px 14px;
+    font-size: 14px;
     margin: 0;
-    cursor: default;
-    line-height: 42px;
+    cursor: pointer;
 }
 
 .copy-wrapper .copy-content {
@@ -489,138 +489,3 @@ html, body {
 .rank-row-1 { background: rgba(255,215,0,0.15); border: 1px solid gold; }
 .rank-row-2 { background: rgba(192,192,192,0.1); }
 .rank-row-3 { background: rgba(205,127,50,0.1); }
-
-/* ── Share Button in Navbar ── */
-.share-nav-btn {
-    float: right;
-    background: linear-gradient(135deg, #e94560, #0f3460);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
-    margin: 6px 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-.share-nav-btn:hover { transform: scale(1.1); }
-
-/* ── Share Modal ── */
-.share-modal-overlay {
-    display: none;
-    position: fixed;
-    z-index: 200;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.75);
-    justify-content: center;
-    align-items: center;
-}
-.share-modal-box {
-    background: #16213e;
-    border: 2px solid #e94560;
-    border-radius: 16px;
-    padding: 24px 20px;
-    width: 90%;
-    max-width: 360px;
-    text-align: center;
-    color: white;
-    box-shadow: 0 0 40px rgba(233,69,96,0.4);
-    animation: sharePopIn 0.3s ease;
-}
-@keyframes sharePopIn {
-    from { transform: scale(0.8); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
-}
-.share-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: #e94560;
-}
-.share-close-btn {
-    background: none;
-    border: none;
-    color: #aaa;
-    font-size: 20px;
-    cursor: pointer;
-    padding: 0 4px;
-}
-.share-close-btn:hover { color: white; }
-.share-room-code-wrap {
-    background: #0f3460;
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 12px;
-}
-.share-label {
-    font-size: 11px;
-    color: #aaa;
-    margin-bottom: 6px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-.share-room-code {
-    font-size: 36px;
-    font-weight: bold;
-    letter-spacing: 8px;
-    color: #FFD700;
-    margin-bottom: 10px;
-}
-.share-copy-code-btn {
-    background: #e94560;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 18px;
-    font-size: 13px;
-    cursor: pointer;
-}
-.share-divider {
-    color: #aaa;
-    font-size: 13px;
-    margin: 10px 0;
-}
-.share-link-box {
-    background: #0f3460;
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 12px;
-    color: #aaa;
-    word-break: break-all;
-    margin-bottom: 14px;
-}
-.share-btns-row {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-bottom: 10px;
-}
-.share-btn-copy {
-    background: #0f3460;
-    color: white;
-    border: 2px solid #e94560;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 13px;
-    cursor: pointer;
-    flex: 1;
-}
-.share-btn-whatsapp {
-    background: #25D366;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 13px;
-    cursor: pointer;
-    flex: 1;
-}
-.share-copied-msg {
-    color: #4CAF50;
-    font-size: 13px;
-    min-height: 20px;
-}
