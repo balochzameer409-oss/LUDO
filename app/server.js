@@ -9,6 +9,7 @@ const rootRouter = require('./routes/rootRouter')
 const ludoRouter = require('./routes/ludoRouter')
 
 let {rooms,NumberOfMembers,win} = require('./models/model');
+let socketToRoomMap = {}; // socket → {room, id} tracking
 
 const app = express();
 const server = createServer(app);
@@ -32,19 +33,28 @@ nsp.on('connection',(socket)=>{
     console.log('A User has connected to the game');
     socket.on('fetch',(data,cb)=>{
         try{
-            // ✅ FIX: data اور room validate کریں
             if(!data || typeof data !== 'string' || !rooms[data]){
                 socket.emit('imposter');
                 return;
             }
-            
+
+            // اگر یہ socket پہلے سے کسی room میں ہے تو پہلے ہٹاؤ
+            if(socketToRoomMap[socket.id]){
+                let {room: oldRoom, id: oldId} = socketToRoomMap[socket.id];
+                if(rooms[oldRoom] && rooms[oldRoom][oldId]){
+                    delete rooms[oldRoom][oldId];
+                }
+                socket.leave(oldRoom);
+                delete socketToRoomMap[socket.id];
+            }
+
             let member_id = generate_member_id(socket.id,data);
             socket.join(data);
             if(member_id !== -1){
+                socketToRoomMap[socket.id] = {room: data, id: member_id};
                 cb(Object.keys(rooms[data]),member_id);
                 socket.to(data).emit('new-user-joined',{id:member_id});
             }else{
-                console.log('⚠️ Room is full or error in member_id generation');
                 socket.emit('imposter');
             }
         }
@@ -151,12 +161,20 @@ nsp.on('connection',(socket)=>{
     });
 
     socket.on('disconnect',()=>{
-        let roomKey = deleteThisid(socket.id);
-        if(roomKey != undefined){
-            console.log('🔌 Player disconnected from room:', roomKey.room);
-            socket.to(roomKey.room).emit('user-disconnected', roomKey.key)
+        if(socketToRoomMap[socket.id]){
+            let {room, id} = socketToRoomMap[socket.id];
+            if(rooms[room] && rooms[room][id]){
+                delete rooms[room][id];
+                socket.to(room).emit('user-disconnected', id);
+                // خالی room صاف کرو
+                if(Object.keys(rooms[room]).length === 0){
+                    delete rooms[room];
+                    if(win[room]) delete win[room];
+                    if(NumberOfMembers[room]) delete NumberOfMembers[room];
+                }
+            }
+            delete socketToRoomMap[socket.id];
         }
-        console.log('A client just got disconnected');
     });
 });
 
@@ -180,28 +198,7 @@ function generate_member_id(s_id, rc){
     return -1;
 }
 
-//to delete the extra place when (only one) user refreshes.
-function deleteThisid(id){
-    for(var roomcd in rooms){
-        if(rooms.hasOwnProperty(roomcd)){
-            let ky = Object.keys(rooms[roomcd]).find( key => rooms[roomcd][key]['sid'] == id);
-            if(typeof(ky) === 'string'){
-                delete rooms[roomcd][ky];
-                
-                // ✅ FIX: خالی room کو delete کریں
-                if(Object.keys(rooms[roomcd]).length == 0){
-                    delete rooms[roomcd];
-                    // ✅ FIX: cleanup win اور NumberOfMembers بھی
-                    if(win[roomcd]) delete win[roomcd];
-                    if(NumberOfMembers[roomcd]) delete NumberOfMembers[roomcd];
-                }
-                
-                return {key:ky,room:roomcd};
-            }
-        }
-    }
-    return undefined;
-}
+
 
 // ✅ FIX: بہتر winner validation
 function validateWinner(OBJ, socket){
