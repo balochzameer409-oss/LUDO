@@ -3,11 +3,10 @@
     height: 48px;
     background: linear-gradient(145deg, #fde8e8, #ffd6d6);
     border-radius: 14px;
-    border: 3px solid #FFD700;
+    border: 2px solid rgba(255,255,255,0.2);
     box-shadow:
         inset 0 2px 4px rgba(255,255,255,0.8),
         inset 0 -2px 4px rgba(0,0,0,0.1),
-        0 0 0 1px rgba(255,215,0,0.4),
         0 4px 10px rgba(0,0,0,0.35);
     display: grid;
     grid-template-areas:
@@ -22,19 +21,31 @@
 }
 
 .corner-dice:active {
-    transform: scale(0.92);
+    transform: scale(0.88);
 }
 
+/* dice گھومے تو خود بھی اور اپنے parent box کو بھی چمکائے */
 .corner-dice.rolling {
-    animation: roll 0.5s ease-in-out;
+    animation: roll 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    border-color: #FFD700;
+    box-shadow:
+        inset 0 2px 4px rgba(255,255,255,0.8),
+        0 0 12px 3px rgba(255,215,0,0.8);
 }
+
+/* rolling کے دوران parent corner-box کو بھی چمکاؤ */
+.corner-green .corner-dice.rolling  { box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 0 14px 4px #00c853; }
+.corner-red .corner-dice.rolling    { box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 0 14px 4px #ff1744; }
+.corner-yellow .corner-dice.rolling { box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 0 14px 4px #ffd600; }
+.corner-blue .corner-dice.rolling   { box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 0 14px 4px #2979ff; }
 
 @keyframes roll {
-    0%   { transform: rotate(0deg)   scale(1);   }
-    25%  { transform: rotate(90deg)  scale(0.9); }
-    50%  { transform: rotate(180deg) scale(1.1); }
-    75%  { transform: rotate(270deg) scale(0.9); }
-    100% { transform: rotate(360deg) scale(1);   }
+    0%   { transform: rotate(0deg)   scale(1);    }
+    20%  { transform: rotate(72deg)  scale(0.85); }
+    40%  { transform: rotate(144deg) scale(1.15); }
+    60%  { transform: rotate(216deg) scale(0.85); }
+    80%  { transform: rotate(288deg) scale(1.1);  }
+    100% { transform: rotate(360deg) scale(1);    }
 }
 
 .dot {
@@ -55,25 +66,20 @@
 .dot.g { grid-area: g; }
 
 .corner-dice[data-num="1"] .dot.g { display: block; }
-
 .corner-dice[data-num="2"] .dot.a { display: block; }
 .corner-dice[data-num="2"] .dot.b { display: block; }
-
 .corner-dice[data-num="3"] .dot.a { display: block; }
 .corner-dice[data-num="3"] .dot.g { display: block; }
 .corner-dice[data-num="3"] .dot.b { display: block; }
-
 .corner-dice[data-num="4"] .dot.a { display: block; }
 .corner-dice[data-num="4"] .dot.c { display: block; }
 .corner-dice[data-num="4"] .dot.d { display: block; }
 .corner-dice[data-num="4"] .dot.b { display: block; }
-
 .corner-dice[data-num="5"] .dot.a { display: block; }
 .corner-dice[data-num="5"] .dot.c { display: block; }
 .corner-dice[data-num="5"] .dot.g { display: block; }
 .corner-dice[data-num="5"] .dot.d { display: block; }
 .corner-dice[data-num="5"] .dot.b { display: block; }
-
 .corner-dice[data-num="6"] .dot.a { display: block; }
 .corner-dice[data-num="6"] .dot.c { display: block; }
 .corner-dice[data-num="6"] .dot.e { display: block; }
@@ -87,14 +93,8 @@
     filter: grayscale(70%);
 }
 
-/* باری آنے پر - صرف border چمکے */
 .corner-dice.active {
     cursor: pointer;
-    border-color: #FFD700;
-    box-shadow:
-        inset 0 2px 4px rgba(255,255,255,0.8),
-        inset 0 -2px 4px rgba(0,0,0,0.1),
-        0 0 0 1px #FFD700;
 }
 
 @media (min-width: 769px) {
