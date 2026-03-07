@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../style/ludo.css">
     <link rel="stylesheet" href="../style/dice.css">
-    <link rel="stylesheet" href="../style/share_styles.css">
 
     <link rel="apple-touch-icon" sizes="180x180" href="../images/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon/favicon-32x32.png">
@@ -88,6 +87,7 @@
         <!-- TOP ROW: Green + Red -->
         <div class="corners-row top-row">
             <div class="corner-box corner-green" id="corner-0">
+                <div class="player-label green-label">🟢 GREEN</div>
                 <div class="dice-corner-wrap">
                     <div class="dice corner-dice disabled" id="dice-0" data-num="6">
                         <span class="dot a"></span><span class="dot b"></span>
@@ -99,6 +99,7 @@
                 <div class="corner-msg" id="cmsg-0">Waiting...</div>
             </div>
             <div class="corner-box corner-red" id="corner-1">
+                <div class="player-label red-label">🔴 RED</div>
                 <div class="dice-corner-wrap">
                     <div class="dice corner-dice disabled" id="dice-1" data-num="6">
                         <span class="dot a"></span><span class="dot b"></span>
@@ -120,6 +121,7 @@
         <!-- BOTTOM ROW: Yellow + Blue -->
         <div class="corners-row bottom-row">
             <div class="corner-box corner-yellow" id="corner-3">
+                <div class="player-label yellow-label">🟡 YELLOW</div>
                 <div class="dice-corner-wrap">
                     <div class="dice corner-dice disabled" id="dice-3" data-num="6">
                         <span class="dot a"></span><span class="dot b"></span>
@@ -131,6 +133,7 @@
                 <div class="corner-msg" id="cmsg-3">Waiting...</div>
             </div>
             <div class="corner-box corner-blue" id="corner-2">
+                <div class="player-label blue-label">🔵 BLUE</div>
                 <div class="dice-corner-wrap">
                     <div class="dice corner-dice disabled" id="dice-2" data-num="6">
                         <span class="dot a"></span><span class="dot b"></span>
@@ -183,9 +186,11 @@
         var lk = document.getElementById('share-link-text');
         if (el) el.textContent = code;
         if (lk) lk.textContent = window.location.href;
+        // modal خود بخود کھلے
         document.getElementById('share-modal').style.display = 'flex';
     }
     </script>
+    <script src="../js/ludo-sound.js"></script>
     <script src='../../socket.io/socket.io.js'></script>
     <script src="../js/ludo.js"></script>
     <script src="../js/dice-sync.js"></script>
