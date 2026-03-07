@@ -1,60 +1,84 @@
+/* ============================================================
+   DICE - Premium 3D per-player colored dice
+   ============================================================ */
+
 .corner-dice {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(145deg, #fde8e8, #ffd6d6);
+    width: 52px;
+    height: 52px;
     border-radius: 14px;
-    border: 2px solid rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.25);
+    background: linear-gradient(145deg, #f0f0f0, #d0d0d0);
     box-shadow:
-        inset 0 2px 4px rgba(255,255,255,0.8),
-        inset 0 -2px 4px rgba(0,0,0,0.1),
-        0 4px 10px rgba(0,0,0,0.35);
+        inset 0 2px 5px rgba(255,255,255,0.85),
+        inset 0 -3px 5px rgba(0,0,0,0.18),
+        0 5px 14px rgba(0,0,0,0.45),
+        0 2px 4px rgba(0,0,0,0.3);
     display: grid;
     grid-template-areas:
         "a . c"
         "e g f"
         "d . b";
-    padding: 6px;
+    padding: 7px;
     gap: 3px;
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: transform 0.1s, box-shadow 0.2s;
     position: relative;
+    overflow: hidden;
 }
 
-.corner-dice:active {
-    transform: scale(0.88);
+/* Glass shine overlay */
+.corner-dice::before {
+    content: '';
+    position: absolute;
+    top: 3px; left: 5px;
+    width: 52%; height: 40%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 100%);
+    border-radius: 8px 8px 60% 20%;
+    pointer-events: none;
+    z-index: 2;
 }
 
-/* dice گھومے تو خود بھی اور اپنے parent box کو بھی چمکائے */
-.corner-dice.rolling {
-    animation: roll 0.4s cubic-bezier(.36,.07,.19,.97) both;
-    border-color: #FFD700;
-    box-shadow:
-        inset 0 2px 4px rgba(255,255,255,0.8),
-        0 0 12px 3px rgba(255,215,0,0.8);
-}
+/* Per-player dice colors */
+.corner-green  .corner-dice { background: linear-gradient(145deg, #b9fbc0, #43e97b, #1b5e20); border-color: rgba(0,230,118,0.5); }
+.corner-red    .corner-dice { background: linear-gradient(145deg, #ffd6d6, #ff6b6b, #7f0000); border-color: rgba(255,82,82,0.5); }
+.corner-yellow .corner-dice { background: linear-gradient(145deg, #fffacc, #ffe033, #c47a00); border-color: rgba(255,215,0,0.5); }
+.corner-blue   .corner-dice { background: linear-gradient(145deg, #cce0ff, #5b9dff, #0d47a1); border-color: rgba(64,196,255,0.5); }
 
-/* rolling کے دوران parent corner-box کو بھی چمکاؤ */
-.corner-green .corner-dice.rolling  { box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 0 14px 4px #00c853; }
-.corner-red .corner-dice.rolling    { box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 0 14px 4px #ff1744; }
-.corner-yellow .corner-dice.rolling { box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 0 14px 4px #ffd600; }
-.corner-blue .corner-dice.rolling   { box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 0 14px 4px #2979ff; }
+.corner-dice:active { transform: scale(0.87); }
+
+/* Rolling */
+.corner-dice.rolling { animation: roll 0.42s cubic-bezier(.36,.07,.19,.97) both; }
+.corner-green  .corner-dice.rolling { box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 0 20px 6px #00c853; }
+.corner-red    .corner-dice.rolling { box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 0 20px 6px #ff1744; }
+.corner-yellow .corner-dice.rolling { box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 0 20px 6px #ffd600; }
+.corner-blue   .corner-dice.rolling { box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 0 20px 6px #2979ff; }
 
 @keyframes roll {
     0%   { transform: rotate(0deg)   scale(1);    }
-    20%  { transform: rotate(72deg)  scale(0.85); }
-    40%  { transform: rotate(144deg) scale(1.15); }
-    60%  { transform: rotate(216deg) scale(0.85); }
-    80%  { transform: rotate(288deg) scale(1.1);  }
+    20%  { transform: rotate(72deg)  scale(0.82); }
+    40%  { transform: rotate(144deg) scale(1.18); }
+    60%  { transform: rotate(216deg) scale(0.82); }
+    80%  { transform: rotate(288deg) scale(1.12); }
     100% { transform: rotate(360deg) scale(1);    }
 }
 
+/* Dots - dark on plain, white on colored */
 .dot {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #444, #111);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    background: radial-gradient(circle at 38% 32%, #555, #0a0a0a);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.12);
     display: none;
+    position: relative;
+    z-index: 3;
+}
+.corner-green .dot,
+.corner-red   .dot,
+.corner-yellow .dot,
+.corner-blue  .dot {
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.98), rgba(210,210,210,0.75));
+    box-shadow: 0 1px 4px rgba(0,0,0,0.55), inset 0 1px 2px rgba(255,255,255,0.3);
 }
 
 .dot.a { grid-area: a; }
@@ -66,45 +90,17 @@
 .dot.g { grid-area: g; }
 
 .corner-dice[data-num="1"] .dot.g { display: block; }
-.corner-dice[data-num="2"] .dot.a { display: block; }
-.corner-dice[data-num="2"] .dot.b { display: block; }
-.corner-dice[data-num="3"] .dot.a { display: block; }
-.corner-dice[data-num="3"] .dot.g { display: block; }
-.corner-dice[data-num="3"] .dot.b { display: block; }
-.corner-dice[data-num="4"] .dot.a { display: block; }
-.corner-dice[data-num="4"] .dot.c { display: block; }
-.corner-dice[data-num="4"] .dot.d { display: block; }
-.corner-dice[data-num="4"] .dot.b { display: block; }
-.corner-dice[data-num="5"] .dot.a { display: block; }
-.corner-dice[data-num="5"] .dot.c { display: block; }
-.corner-dice[data-num="5"] .dot.g { display: block; }
-.corner-dice[data-num="5"] .dot.d { display: block; }
-.corner-dice[data-num="5"] .dot.b { display: block; }
-.corner-dice[data-num="6"] .dot.a { display: block; }
-.corner-dice[data-num="6"] .dot.c { display: block; }
-.corner-dice[data-num="6"] .dot.e { display: block; }
-.corner-dice[data-num="6"] .dot.f { display: block; }
-.corner-dice[data-num="6"] .dot.d { display: block; }
-.corner-dice[data-num="6"] .dot.b { display: block; }
+.corner-dice[data-num="2"] .dot.a,.corner-dice[data-num="2"] .dot.b { display: block; }
+.corner-dice[data-num="3"] .dot.a,.corner-dice[data-num="3"] .dot.g,.corner-dice[data-num="3"] .dot.b { display: block; }
+.corner-dice[data-num="4"] .dot.a,.corner-dice[data-num="4"] .dot.c,.corner-dice[data-num="4"] .dot.d,.corner-dice[data-num="4"] .dot.b { display: block; }
+.corner-dice[data-num="5"] .dot.a,.corner-dice[data-num="5"] .dot.c,.corner-dice[data-num="5"] .dot.g,.corner-dice[data-num="5"] .dot.d,.corner-dice[data-num="5"] .dot.b { display: block; }
+.corner-dice[data-num="6"] .dot.a,.corner-dice[data-num="6"] .dot.c,.corner-dice[data-num="6"] .dot.e,.corner-dice[data-num="6"] .dot.f,.corner-dice[data-num="6"] .dot.d,.corner-dice[data-num="6"] .dot.b { display: block; }
 
-.corner-dice.disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    filter: grayscale(70%);
-}
-
-.corner-dice.active {
-    cursor: pointer;
-}
+.corner-dice.disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(80%) brightness(0.6); }
+.corner-dice.active   { cursor: pointer; }
 
 @media (min-width: 769px) {
-    .corner-dice {
-        width: 68px;
-        height: 68px;
-        border-radius: 18px;
-        padding: 9px;
-        gap: 5px;
-    }
+    .corner-dice { width: 72px; height: 72px; border-radius: 18px; padding: 10px; gap: 5px; }
 }
 
 #randomButt { display: none !important; }
