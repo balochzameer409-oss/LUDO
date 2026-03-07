@@ -5,7 +5,7 @@ html, body {
     padding: 0;
     height: 100%;
     overflow: hidden;
-    background: #4169E1;
+    background: #191970;
     font-family: "Audiowide", sans-serif;
 }
 
@@ -143,15 +143,26 @@ html, body {
     margin: 4px;
 }
 
-/* ── MAIN WRAPPER ── */
+/* MAIN WRAPPER */
 .gameWrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
     height: calc(100vh - 44px);
-    padding: 5px;
-    gap: 5px;
+    padding: 4px;
+    gap: 4px;
     overflow: hidden;
+}
+
+/* corners-row: left-aligned small boxes */
+.corners-row {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 500px;
+    gap: 8px;
+    justify-content: flex-start;
+    padding: 0 2px;
 }
 
 /* ── CORNER ROWS ── */
@@ -164,59 +175,51 @@ html, body {
     justify-content: space-between;
 }
 
-/* ── CORNER BOX - compact ── */
+/* ── CORNER BOX - بالکل چھوٹا، dice جتنا ── */
 .corner-box {
-    flex: 1;
-    border-radius: 12px;
-    padding: 1px 1px;
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     justify-content: center;
-    gap: 1px;
+    gap: 3px;
+    padding: 6px 8px;
+    border-radius: 12px;
     border: 2px solid transparent;
-    transition: box-shadow 0.35s ease, border-color 0.35s ease, opacity 0.35s ease, background 0.35s ease;
+    transition: box-shadow 0.35s ease, border-color 0.35s ease, opacity 0.35s ease;
     opacity: 0.45;
     cursor: default;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.06);
     backdrop-filter: blur(4px);
+    /* خود بخود dice کے مطابق سائز */
+    width: auto;
+    flex: 0 0 auto;
 }
 
-/* Inner: piece left + dice right */
-.corner-inner {
+.dice-corner-wrap {
     display: flex;
-    flex-direction: row;
+    justify-content: center;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
 }
 
-/* Piece avatar */
-.avatar-piece {
-    width: 40px;
-    height: 40px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    flex-shrink: 0;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+.corner-msg {
+    font-size: 8px;
+    color: #aabbd0;
+    text-align: center;
+    font-family: sans-serif;
+    white-space: nowrap;
 }
-.green-piece  { background-image: url('../images/green.png'); }
-.red-piece    { background-image: url('../images/red.png'); }
-.yellow-piece { background-image: url('../images/yellow.png'); }
-.blue-piece   { background-image: url('../images/blue.png'); }
 
-/* color borders */
-.corner-green  { border-color: rgba(0,200,83,0.25);  background: rgba(0,200,83,0.07); }
-.corner-red    { border-color: rgba(255,23,68,0.25);  background: rgba(255,23,68,0.07); }
-.corner-yellow { border-color: rgba(255,214,0,0.25);  background: rgba(255,214,0,0.07); }
-.corner-blue   { border-color: rgba(41,121,255,0.25); background: rgba(41,121,255,0.07); }
+/* colors */
+.corner-green  { border-color: rgba(0,200,83,0.3);  background: rgba(0,200,83,0.08); }
+.corner-red    { border-color: rgba(255,23,68,0.3);  background: rgba(255,23,68,0.08); }
+.corner-yellow { border-color: rgba(255,214,0,0.3);  background: rgba(255,214,0,0.08); }
+.corner-blue   { border-color: rgba(41,121,255,0.3); background: rgba(41,121,255,0.08); }
 
-/* Active/my-turn */
-.corner-green.my-turn  { opacity:1; box-shadow: 0 0 20px 4px #00c853; border-color: #00c853; background: rgba(0,200,83,0.14); }
-.corner-red.my-turn    { opacity:1; box-shadow: 0 0 20px 4px #ff1744; border-color: #ff1744; background: rgba(255,23,68,0.14); }
-.corner-yellow.my-turn { opacity:1; box-shadow: 0 0 20px 4px #ffd600; border-color: #ffd600; background: rgba(255,214,0,0.14); }
-.corner-blue.my-turn   { opacity:1; box-shadow: 0 0 20px 4px #2979ff; border-color: #2979ff; background: rgba(41,121,255,0.14); }
+/* my-turn glow */
+.corner-green.my-turn  { opacity:1; box-shadow: 0 0 18px 4px #00c853; border-color: #00c853; background: rgba(0,200,83,0.15); }
+.corner-red.my-turn    { opacity:1; box-shadow: 0 0 18px 4px #ff1744; border-color: #ff1744; background: rgba(255,23,68,0.15); }
+.corner-yellow.my-turn { opacity:1; box-shadow: 0 0 18px 4px #ffd600; border-color: #ffd600; background: rgba(255,214,0,0.15); }
+.corner-blue.my-turn   { opacity:1; box-shadow: 0 0 18px 4px #2979ff; border-color: #2979ff; background: rgba(41,121,255,0.15); }
 
 .dice-corner-wrap {
     display: flex;
