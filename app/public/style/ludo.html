@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LUDO</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Audiowide|Sofia">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style/ludo.css">
+    <link rel="stylesheet" href="../style/dice.css">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="../images/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
+    <link rel="manifest" href="../images/favicon/site.webmanifest">
+    <meta name="msapplication-config" content="../images/favicon/browserconfig.xml" />
+    <meta name="msapplication-TileColor" content="000000">
+    <meta name="theme-color" content="000000">
+</head>
+<body onclick="if(window.LudoSound)LudoSound.unlock();" 
+      ontouchstart="if(window.LudoSound)LudoSound.unlock();">
+    <div class="navBar">
+        <a href="">HOME</a>
+        <a href="">LUDO</a>
+        <a href="about">ABOUT</a>
+        <div class="copy-wrapper">
+            <h3 id="my-name" onclick="copy(event)">&#10024;  </h3>
+            <div class="copy-content">
+                <h3>Invite your friends!</h3>
+                <textarea id="copy" cols="30" rows="6">Hey dude let's play a LUDO match &#x1f3b2;</textarea><br>
+                <div class="tooltip">
+                    <button id="copy-btn" onclick="copyhandler()" onmouseout="outFunc()">
+                        <span class="tooltiptext" id="myTooltip">copy to clipboard</span>
+                        <img src="../images/icons/clipboard.png" alt="COPY" style="height: 20px; width: 18px;">
+                    </button>
+                </div>
+                <div class="tooltip">
+                    <button id="copy-btn" onclick="copyhandlerLink()" onmouseout="outFuncLink()">
+                        <span class="tooltiptext" id="myTooltipLink">copy room link to the clipboard</span>
+                        <img src="../images/icons/copy-link.png" alt="COPY" style="height: 20px; width: 18px;">
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- پرانا modal hidden رکھو -->
+    <div id="myModal-1" class="modal" style="display:none!important"></div>
+
+    <!-- نیا ranking modal -->
+    <div id="rank-modal" class="modal">
+        <div class="rank-modal-content">
+            <div class="rank-trophy">🏆</div>
+            <h2 class="rank-title">گیم ختم!</h2>
+            <div id="rank-list"></div>
+            <div class="rank-btns">
+                <button class="rank-home-btn" onclick='window.location.replace("/");'>🏠 HOME</button>
+                <button class="rank-play-btn" onclick='window.location.replace(window.location.href);'>🔄 دوبارہ</button>
+            </div>
+        </div>
+    </div>
+    <div id="myModal-2" class="modal">
+        <div class="modal-content" style="margin: 15% auto;">
+            <h3 id="resume">Resume the game without <span id="theOneWhoLeft"></span><span id="seconds"> in 10</span>.</h3>
+            <button id="RESUME">RESUME</button>
+            <button id="WAIT">WAIT</button>
+            <br>
+        </div>  
+    </div>
+
+    <!-- MAIN LAYOUT -->
+    <div class="gameWrapper">
+
+        <!-- TOP ROW: Green + Red -->
+        <div class="corners-row top-row">
+            <div class="corner-box corner-green" id="corner-0">
+                <div class="corner-inner">
+                    <div class="avatar-piece green-piece"></div>
+                    <div class="dice-corner-wrap">
+                        <div class="dice corner-dice disabled" id="dice-0" data-num="6">
+                            <span class="dot a"></span><span class="dot b"></span>
+                            <span class="dot c"></span><span class="dot d"></span>
+                            <span class="dot e"></span><span class="dot f"></span>
+                            <span class="dot g"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="corner-msg" id="cmsg-0">Waiting...</div>
+            </div>
+            <div class="corner-box corner-red" id="corner-1">
+                <div class="corner-inner">
+                    <div class="avatar-piece red-piece"></div>
+                    <div class="dice-corner-wrap">
+                        <div class="dice corner-dice disabled" id="dice-1" data-num="6">
+                            <span class="dot a"></span><span class="dot b"></span>
+                            <span class="dot c"></span><span class="dot d"></span>
+                            <span class="dot e"></span><span class="dot f"></span>
+                            <span class="dot g"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="corner-msg" id="cmsg-1">Waiting...</div>
+            </div>
+        </div>
+
+        <!-- BOARD -->
+        <div class="gameBoard">
+            <img src="../images/LUDO_BOARD.svg" alt="LUDO BOARD" class="ludoImg">
+            <canvas class="gameCanvas" id="theCanvas"></canvas>
+        </div>
+
+        <!-- BOTTOM ROW: Yellow + Blue -->
+        <div class="corners-row bottom-row">
+            <div class="corner-box corner-yellow" id="corner-3">
+                <div class="corner-inner">
+                    <div class="avatar-piece yellow-piece"></div>
+                    <div class="dice-corner-wrap">
+                        <div class="dice corner-dice disabled" id="dice-3" data-num="6">
+                            <span class="dot a"></span><span class="dot b"></span>
+                            <span class="dot c"></span><span class="dot d"></span>
+                            <span class="dot e"></span><span class="dot f"></span>
+                            <span class="dot g"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="corner-msg" id="cmsg-3">Waiting...</div>
+            </div>
+            <div class="corner-box corner-blue" id="corner-2">
+                <div class="corner-inner">
+                    <div class="avatar-piece blue-piece"></div>
+                    <div class="dice-corner-wrap">
+                        <div class="dice corner-dice disabled" id="dice-2" data-num="6">
+                            <span class="dot a"></span><span class="dot b"></span>
+                            <span class="dot c"></span><span class="dot d"></span>
+                            <span class="dot e"></span><span class="dot f"></span>
+                            <span class="dot g"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="corner-msg" id="cmsg-2">Waiting...</div>
+            </div>
+        </div>
+
+        <!-- Message Log -->
+        <div class="msgBoard">
+            <div class="messageFromServer"><strong>LET US START THE GAME!!!</strong></div>
+        </div>
+
+    </div>
+
+    <!-- Hidden original dice (JS compatibility) -->
+    <div style="display:none">
+        <div class="dice disabled" id="randomButt" data-num="6">
+            <span class="dot a"></span><span class="dot b"></span>
+            <span class="dot c"></span><span class="dot d"></span>
+            <span class="dot e"></span><span class="dot f"></span>
+            <span class="dot g"></span>
+        </div>
+    </div>
+
+    <script src="../js/ludo-sound.js"></script>
+    <script src='../../socket.io/socket.io.js'></script>
+    <script src="../js/ludo.js"></script>
+    <script src="../js/dice-sync.js"></script>
+</body>
+</html>
