@@ -105,7 +105,7 @@
 .corner-dice[data-num="5"] .dot.a,.corner-dice[data-num="5"] .dot.c,.corner-dice[data-num="5"] .dot.g,.corner-dice[data-num="5"] .dot.d,.corner-dice[data-num="5"] .dot.b { display: block; }
 .corner-dice[data-num="6"] .dot.a,.corner-dice[data-num="6"] .dot.c,.corner-dice[data-num="6"] .dot.e,.corner-dice[data-num="6"] .dot.f,.corner-dice[data-num="6"] .dot.d,.corner-dice[data-num="6"] .dot.b { display: block; }
 
-.corner-dice.disabled { opacity: 0.73; cursor: not-allowed; filter: grayscale(80%) brightness(0.6); }
+.corner-dice.disabled { opacity: 0.8; cursor: not-allowed; filter: grayscale(80%) brightness(0.6); }
 .corner-dice.active   { cursor: pointer; }
 
 @media (min-width: 769px) {
