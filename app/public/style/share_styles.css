@@ -1,7 +1,7 @@
 /* Share Button */
 .share-nav-btn {
     float: right;
-    background: linear-gradient(135deg, #e94560, #0f3460);
+    background: none;
     color: white;
     border: none;
     border-radius: 6px;
