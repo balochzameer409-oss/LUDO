@@ -168,12 +168,12 @@ html, body {
 .corner-box {
     flex: 1;
     border-radius: 12px;
-    padding: 5px 8px;
+    padding: 1px 1px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: center;
-    gap: 2px;
+    gap: 1px;
     border: 2px solid transparent;
     transition: box-shadow 0.35s ease, border-color 0.35s ease, opacity 0.35s ease, background 0.35s ease;
     opacity: 0.45;
