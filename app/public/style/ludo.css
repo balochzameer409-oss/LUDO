@@ -5,7 +5,7 @@ html, body {
     padding: 0;
     height: 100%;
     overflow: hidden;
-    background: #191970;
+    background: #444444;
     font-family: "Audiowide", sans-serif;
 }
 
@@ -186,7 +186,7 @@ html, body {
     border-radius: 12px;
     border: 2px solid transparent;
     transition: box-shadow 0.35s ease, border-color 0.35s ease, opacity 0.35s ease;
-    opacity: 0.45;
+    opacity: 0.80;
     cursor: default;
     background: rgba(255,255,255,0.06);
     backdrop-filter: blur(4px);
