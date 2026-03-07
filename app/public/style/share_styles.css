@@ -1,18 +1,15 @@
 /* Share Button */
 .share-nav-btn {
-    background: rgba(255,255,255,0.2);
+    float: right;
+    background: none;
     color: white;
-    border: 1px solid rgba(255,255,255,0.4);
-    border-radius: 20px;
-    padding: 6px 20px;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    margin: 7px 8px;
     font-size: 13px;
     cursor: pointer;
     font-family: "Audiowide", sans-serif;
-    letter-spacing: 0.5px;
-    transition: background 0.2s;
-}
-.share-nav-btn:hover {
-    background: rgba(255,255,255,0.35);
 }
 
 /* Share Modal */
