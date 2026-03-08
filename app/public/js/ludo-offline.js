@@ -52,16 +52,32 @@ function tryMovePiece(x, y) {
                 _num     = undefined;
                 _spirit  = undefined;
 
-                piece.update(movedNum);
                 if (window.LudoSound) LudoSound.move();
-                iKill(chance, i);
-                allPlayerHandler();
+                var currentChance = chance;
+                var currentI = i;
+                var currentMovedNum = movedNum;
+                piece.animateMove(movedNum, function () {
+                    var killed = iKill(currentChance, currentI);
+                    allPlayerHandler();
 
-                if (PLAYERS[chance].didIwin()) {
-                    showWin(chance);
-                    return;
-                }
-                setTimeout(function () { nextTurn(movedNum); }, 400);
+                    if (PLAYERS[currentChance].didIwin()) {
+                        showWin(currentChance);
+                        return;
+                    }
+
+                    // گوٹی گھر پہنچی؟
+                    var justWon = PLAYERS[currentChance].myPieces[currentI].pos === 56;
+
+                    if (killed) {
+                        outputMessage('🎉 ' + USERNAMES[currentChance] + ' نے گوٹی ماری — دوبارہ باری!', 'server');
+                        setTimeout(function () { activateChance(currentChance); }, 400);
+                    } else if (justWon) {
+                        outputMessage('🏠 ' + USERNAMES[currentChance] + ' کی گوٹی گھر پہنچی — دوبارہ باری!', 'server');
+                        setTimeout(function () { activateChance(currentChance); }, 400);
+                    } else {
+                        setTimeout(function () { nextTurn(currentMovedNum); }, 400);
+                    }
+                });
             } else {
                 outputMessage('یہ گوٹی نہیں چل سکتی!', 'server');
             }
@@ -217,7 +233,6 @@ class Piece {
         } 
         // اگر گوٹی پہلے سے board میں ہے اور آگے جا سکتی ہے
         else if (this.pos > -1 && this.pos + num <= 56) {
-            // path میں صحیح position سے شروع کریں
             for (let i = 0; i < num; i++) {
                 let pathIndex = this.pos + i;
                 if (pathIndex < this.path.length) {
@@ -226,6 +241,45 @@ class Piece {
             }
             this.pos += num;
             if (this.pos === 56) PLAYERS[this.color_id].won += 1;
+        }
+    }
+
+    // ── Smooth Animation ──
+    animateMove(num, onDone) {
+        if (this.pos === -1 && num === 6) {
+            // گھر سے نکلنا — سیدھا
+            this.x   = homeTilePos[this.color_id][0].x;
+            this.y   = homeTilePos[this.color_id][0].y;
+            this.pos = 0;
+            allPlayerHandler();
+            if (onDone) onDone();
+            return;
+        }
+        if (this.pos > -1 && this.pos + num <= 56) {
+            let steps = num;
+            let current = 0;
+            const id  = this.color_id;
+            const pid = this.Pid;
+            const piece = this;
+            const interval = setInterval(function () {
+                if (current >= steps) {
+                    clearInterval(interval);
+                    if (piece.pos === 56) PLAYERS[piece.color_id].won += 1;
+                    allPlayerHandler();
+                    if (onDone) onDone();
+                    return;
+                }
+                let pathIndex = piece.pos - (steps - current) + steps - current;
+                // صحیح pathIndex
+                let realIndex = (piece.pos - steps) + current;
+                if (realIndex < 0) realIndex = 0;
+                if (realIndex < piece.path.length) {
+                    piece.path[realIndex](id, pid);
+                }
+                current++;
+                allPlayerHandler();
+            }, 120); // ہر قدم 120ms
+            this.pos += steps;
         }
     }
 
@@ -338,7 +392,7 @@ function nextTurn(lastNum) {
     if (lastNum === 6) {
         if (window.LudoSound) LudoSound.six();
         outputMessage(USERNAMES[chance] + ' کو چھکا — دوبارہ باری! 🎉', 'server');
-        
+
         // چھکے کے بعد check کریں کہ کوئی گوٹی چل سکتی ہے یا نہیں
         var hasMovablePiece = false;
         for (var i = 0; i < 4; i++) {
@@ -349,7 +403,7 @@ function nextTurn(lastNum) {
                 break;
             }
         }
-        
+
         if (hasMovablePiece) {
             activateChance(chance); // دوبارہ یہی کھیل سکتا ہے
         } else {
