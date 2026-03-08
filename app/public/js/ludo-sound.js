@@ -1,77 +1,59 @@
 var LudoSound = (function () {
-    var _sounds = {
-        dice:     '../sounds/dice.mp3',
-        move:     '../sounds/move.mp3',
-        kill:     '../sounds/kill.mp3',
-        win:      '../sounds/win.mp3',
-        six:      '../sounds/six.mp3',
-        gameOver: '../sounds/game-over.mp3'
-    };
 
-    var _volume = {
-        dice:     1.0,
-        move:     0.6,
-        kill:     1.0,
-        win:      1.0,
-        six:      0.9,
-        gameOver: 0.8
-    };
+    var _unlocked = false;
 
-    // ہر sound کے لیے پہلے سے تیار Audio objects کا pool
-    var _pool = {};
-    var _poolSize = 4; // ہر sound کی 4 copies — ٹپ ٹپ ٹپ کے لیے
-
-    Object.keys(_sounds).forEach(function(key) {
-        _pool[key] = [];
-        for (var i = 0; i < _poolSize; i++) {
-            var audio = new Audio(_sounds[key]);
-            audio.volume = _volume[key];
-            audio.preload = 'auto';
-            audio.load();
-            _pool[key].push(audio);
+    // ہر sound کی copies — فوری آواز کے لیے
+    function _makePool(src, vol, size) {
+        var pool = [];
+        for (var i = 0; i < (size || 3); i++) {
+            var a = new Audio(src);
+            a.volume = vol;
+            a.preload = 'auto';
+            a.load();
+            pool.push(a);
         }
-    });
+        return { pool: pool, idx: 0 };
+    }
 
-    // pool میں سے جو فارغ ہو وہ بجاؤ
-    var _index = {};
-    Object.keys(_sounds).forEach(function(key) { _index[key] = 0; });
+    var _pools = {
+        dice:     _makePool('/sounds/dice.mp3',      1.0, 2),
+        move:     _makePool('/sounds/move.mp3',      0.6, 4),
+        kill:     _makePool('/sounds/kill.mp3',      1.0, 2),
+        win:      _makePool('/sounds/win.mp3',       1.0, 2),
+        six:      _makePool('/sounds/six.mp3',       0.9, 2),
+        gameOver: _makePool('/sounds/game-over.mp3', 0.8, 2)
+    };
 
     function _play(key) {
         try {
-            var pool = _pool[key];
-            var idx  = _index[key];
-            var sound = pool[idx];
-            // اگلی باری کے لیے index بڑھاؤ
-            _index[key] = (idx + 1) % pool.length;
+            var p = _pools[key];
+            var sound = p.pool[p.idx];
+            p.idx = (p.idx + 1) % p.pool.length;
             sound.currentTime = 0;
-            var p = sound.play();
-            if (p !== undefined) {
-                p.catch(function() {});
-            }
+            var pr = sound.play();
+            if (pr && pr.catch) pr.catch(function() {});
         } catch(e) {}
     }
 
-    // انلاک — صارف کے پہلے touch پر
     function unlock() {
-        Object.keys(_pool).forEach(function(key) {
-            _pool[key].forEach(function(s) {
+        if (_unlocked) return;
+        _unlocked = true;
+        Object.keys(_pools).forEach(function(key) {
+            _pools[key].pool.forEach(function(s) {
                 var v = s.volume;
                 s.volume = 0;
                 var p = s.play();
-                if (p !== undefined) {
+                if (p && p.then) {
                     p.then(function() {
                         s.pause();
                         s.currentTime = 0;
                         s.volume = v;
                     }).catch(function() { s.volume = v; });
+                } else {
+                    s.volume = v;
                 }
             });
         });
-
-        try {
-            var ctx = new (window.AudioContext || window.webkitAudioContext)();
-            if (ctx.state === 'suspended') ctx.resume();
-        } catch(e) {}
     }
 
     return {
@@ -85,15 +67,12 @@ var LudoSound = (function () {
     };
 })();
 
-// پہلے touch/click پر انلاک
 (function(){
-    function unlockHandler() {
+    function _u() {
         LudoSound.unlock();
-        document.removeEventListener('click',      unlockHandler);
-        document.removeEventListener('touchstart', unlockHandler);
-        document.removeEventListener('keydown',    unlockHandler);
+        document.removeEventListener('click',      _u);
+        document.removeEventListener('touchstart', _u);
     }
-    document.addEventListener('click',      unlockHandler);
-    document.addEventListener('touchstart', unlockHandler);
-    document.addEventListener('keydown',    unlockHandler);
+    document.addEventListener('click',      _u);
+    document.addEventListener('touchstart', _u);
 })();
