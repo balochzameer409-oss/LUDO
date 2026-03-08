@@ -52,26 +52,26 @@ function tryMovePiece(x, y) {
                 _num     = undefined;
                 _spirit  = undefined;
 
-                if (window.LudoSound) LudoSound.move();
                 var currentChance = chance;
                 var currentI = i;
                 var currentMovedNum = movedNum;
                 piece.animateMove(movedNum, function () {
                     var killed = iKill(currentChance, currentI);
+                    // گوٹی گھر پہنچی؟ — didIwin سے پہلے check کرو
+                    var justWon = PLAYERS[currentChance].myPieces[currentI].pos === 56;
                     allPlayerHandler();
 
                     if (PLAYERS[currentChance].didIwin()) {
+                        // سب 4 گوٹیاں گھر — گیم ختم!
                         showWin(currentChance);
                         return;
                     }
-
-                    // گوٹی گھر پہنچی؟
-                    var justWon = PLAYERS[currentChance].myPieces[currentI].pos === 56;
 
                     if (killed) {
                         outputMessage('🎉 ' + USERNAMES[currentChance] + ' نے گوٹی ماری — دوبارہ باری!', 'server');
                         setTimeout(function () { activateChance(currentChance); }, 400);
                     } else if (justWon) {
+                        // ایک گوٹی گھر پہنچی — دوبارہ باری!
                         outputMessage('🏠 ' + USERNAMES[currentChance] + ' کی گوٹی گھر پہنچی — دوبارہ باری!', 'server');
                         setTimeout(function () { activateChance(currentChance); }, 400);
                     } else {
@@ -276,6 +276,7 @@ class Piece {
                 if (realIndex < piece.path.length) {
                     piece.path[realIndex](id, pid);
                 }
+                if (window.LudoSound) LudoSound.move();
                 current++;
                 allPlayerHandler();
             }, 120); // ہر قدم 120ms
