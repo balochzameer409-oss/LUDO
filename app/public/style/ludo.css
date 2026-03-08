@@ -181,11 +181,11 @@ html, body {
     justify-content: center;
     padding: 10px;
     border-radius: 16px;
-    border: 2px solid rgba(255,215,0,0.8);
+    border: 10px solid rgba(255,215,0,0.8);
     background: linear-gradient(135deg, #0d1b35, #1a2a50);
     box-shadow: 0 0 18px rgba(255,215,0,0.35), 0 4px 16px rgba(0,0,0,0.5);
-    width: 95px;
-    height: 95px;
+    width: 75px;
+    height: 75px;
     flex: 0 0 auto;
 }
 
