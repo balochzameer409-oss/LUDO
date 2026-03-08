@@ -254,10 +254,8 @@ socket.on('is-it-your-chance',function(data){
     });
 
     socket.on('new-user-joined',function(data){
-        MYROOM.push(data.id);
-        MYROOM = [...(new Set(MYROOM))];
-        MYROOM.sort(function(a, b){return a - b});
-        for(let i=0;i<MYROOM.length;i++){MYROOM[i] = +MYROOM[i]}
+        if(!MYROOM.includes(+data.id)) MYROOM.push(+data.id);
+        // ترتیب وہی رکھو جو server نے دی — sort مت کرو!
         loadNewPiece(data.id);
         outputMessage({Name:USERNAMES[data.id],id:data.id},0);
         //stop timer,and hide modal.
@@ -289,13 +287,14 @@ socket.on('is-it-your-chance',function(data){
         if(data.num !== undefined){
             let od = document.getElementById('dice-' + data.id);
             if(od){
+                od.setAttribute('data-num', '0'); // گھومتے وقت نمبر چھپاؤ
                 od.classList.add('rolling');
                 setTimeout(()=>{
                     od.setAttribute('data-num', data.num);
                     od.classList.remove('rolling');
                     let cm = document.getElementById('cmsg-' + data.id);
                     if(cm) cm.textContent = '🎲 ' + data.num + ' آیا!';
-                }, 500);
+                }, 350);
             }
         }
     });
@@ -345,8 +344,7 @@ socket.on('connect',function(){
     if(_fetchDone) return;
     _fetchDone = true;
     socket.emit('fetch',room_code,function(data,id){
-        MYROOM = data.sort(function(a, b){return a - b});
-        for(let i=0;i<MYROOM.length;i++){MYROOM[i] = +MYROOM[i]}
+        MYROOM = data.map(function(x){ return +x; }); // ترتیب وہی رکھو
         myid = id;
         StartTheGame();
     });
@@ -440,13 +438,14 @@ function updateDice(num){
     // corner dice: update MY corner face
     let myDice = document.getElementById('dice-' + myid);
     if(myDice){
+        myDice.setAttribute('data-num', '0'); // گھومتے وقت نمبر چھپاؤ
         myDice.classList.add('rolling');
         setTimeout(()=>{
             myDice.setAttribute('data-num', num);
             myDice.classList.remove('rolling');
             let myCmsg = document.getElementById('cmsg-' + myid);
             if(myCmsg) myCmsg.textContent = '🎲 ' + num + ' آیا!';
-        }, 500);
+        }, 350);
     }
 }
 
@@ -513,10 +512,9 @@ function diceAction(){
                             playerObj['pid'] = i;
                             _stopBounce(); // bounce بند
 
-                            // آواز
+                            // آواز — چھکے پر six sound، باقی animation میں ٹپ ٹپ
                             if(window.LudoSound){
                                 if(num === 6 && PLAYERS[myid].myPieces[i].pos === -1) LudoSound.six();
-                                else LudoSound.move();
                             }
 
                             // پرانی position یاد رکھو
@@ -640,35 +638,34 @@ function chanceRotation(id, num){
 //draws 4 x 4 = 16 pieces per call
 // ── sliding animation ──
 function _slidePiece(colorId, pid, fromX, fromY, toX, toY, onDone) {
-    var duration = 300; // ms
-    var start    = null;
+    var piece = window.PLAYERS[colorId].myPieces[pid];
+    piece.x = fromX;
+    piece.y = fromY;
 
-    function step(ts) {
-        if (!start) start = ts;
-        var prog = Math.min((ts - start) / duration, 1);
-        // ease out
-        var ease = 1 - Math.pow(1 - prog, 3);
+    var totalSteps = Math.round((Math.abs(toX - fromX) + Math.abs(toY - fromY)) / 50);
+    if (totalSteps === 0) { if (onDone) onDone(); return; }
 
-        // گوٹی کی position interpolate کرو
-        window.PLAYERS[colorId].myPieces[pid].x = Math.round(fromX + (toX - fromX) * ease);
-        window.PLAYERS[colorId].myPieces[pid].y = Math.round(fromY + (toY - fromY) * ease);
+    var stepDx = (toX - fromX) / totalSteps;
+    var stepDy = (toY - fromY) / totalSteps;
+    var current = 0;
 
-        // canvas draw کرو
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (var i = 0; i < Object.keys(PLAYERS).length; i++) {
-            PLAYERS[MYROOM[i]].draw();
-        }
-
-        if (prog < 1) {
-            requestAnimationFrame(step);
-        } else {
-            // آخری position پر fix کرو
-            window.PLAYERS[colorId].myPieces[pid].x = toX;
-            window.PLAYERS[colorId].myPieces[pid].y = toY;
+    var interval = setInterval(function() {
+        if (current >= totalSteps) {
+            clearInterval(interval);
+            piece.x = toX;
+            piece.y = toY;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (var i = 0; i < MYROOM.length; i++) PLAYERS[MYROOM[i]].draw();
             if (onDone) onDone();
+            return;
         }
-    }
-    requestAnimationFrame(step);
+        piece.x = Math.round(fromX + stepDx * (current + 1));
+        piece.y = Math.round(fromY + stepDy * (current + 1));
+        if (window.LudoSound) LudoSound.move();
+        current++;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var j = 0; j < MYROOM.length; j++) PLAYERS[MYROOM[j]].draw();
+    }, 120);
 }
 
 // ── bounce animation ──
