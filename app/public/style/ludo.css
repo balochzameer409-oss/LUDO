@@ -266,32 +266,7 @@ html, body {
     border-radius: 14px;
 }
 
-/* ── MESSAGE BOARD ── */
-.msgBoard {
-    width: 100%;
-    max-width: 500px;
-    flex: 1;
-    min-height: 36px;
-    max-height: 78px;
-    border-radius: 10px;
-    padding: 6px 12px;
-    background: rgba(13,27,53,0.65);
-    border: 1px solid rgba(255,215,0,0.18);
-    overflow-y: auto;
-    font-family: sans-serif;
-    font-size: 11px;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-}
 
-.message, .messageFromServer {
-    color: #c8d8f0;
-    text-align: center;
-    padding: 1px 0;
-}
-
-#color-message-span1, #theOneWhoLeft { font-family: 'ZCOOL KuaiLe', cursive; }
-#color-message-span2 { font-family: 'Roboto Slab', serif; }
 
 /* ── DESKTOP ── */
 @media (min-width: 769px) {
