@@ -175,23 +175,17 @@ html, body {
     justify-content: space-between;
 }
 
-/* ── CORNER BOX - بالکل چھوٹا، dice جتنا ── */
 .corner-box {
-    display: inline-flex;
-    flex-direction: column;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    padding: 6px 8px;
-    border-radius: 12px;
-    border: 2px solid transparent;
-    transition: box-shadow 0.35s ease, border-color 0.35s ease, opacity 0.35s ease;
-    opacity: 1;
-    cursor: default;
-    background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(4px);
-    /* خود بخود dice کے مطابق سائز */
-    width: auto;
+    padding: 10px;
+    border-radius: 16px;
+    border: 2px solid rgba(255,215,0,0.8);
+    background: linear-gradient(135deg, #0d1b35, #1a2a50);
+    box-shadow: 0 0 18px rgba(255,215,0,0.35), 0 4px 16px rgba(0,0,0,0.5);
+    width: 95px;
+    height: 95px;
     flex: 0 0 auto;
 }
 
@@ -445,5 +439,8 @@ html, body {
 .rank-row-3 { background: rgba(205,127,50,0.1);  border: 1px solid rgba(205,127,50,0.2); }
 
 .msgBoard {
+    display: none;
+}
+.corner-msg {
     display: none;
 }
