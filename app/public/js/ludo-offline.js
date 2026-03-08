@@ -303,8 +303,9 @@ class Piece {
 
 function startOffline(numPlayers) {
     totalPlayers = numPlayers;
-    MYROOM = [];
-    for (let i = 0; i < numPlayers; i++) MYROOM.push(i);
+    // order: Yellow(3), Red(1), Blue(2), Green(0)
+    const orderAll = [3, 1, 2, 0];
+    MYROOM = orderAll.slice(0, numPlayers);
     document.getElementById('player-select-modal').style.display = 'none';
     loadAllPieces();
 }
