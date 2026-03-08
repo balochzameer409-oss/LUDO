@@ -9,7 +9,7 @@ var LudoSound = (function () {
     };
 
     var _volume = {
-        dice:     0.8,
+        dice:     1.0,
         move:     0.6,
         kill:     1.0,
         win:      1.0,
