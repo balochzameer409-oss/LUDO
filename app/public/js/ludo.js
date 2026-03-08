@@ -730,6 +730,7 @@ function allPlayerHandler(){
 
 //Load a new Player instance
 function loadNewPiece(id){
+if(PLAYERS[id]) return;
     PLAYERS[id] = new Player(id);
     allPlayerHandler();
 }
