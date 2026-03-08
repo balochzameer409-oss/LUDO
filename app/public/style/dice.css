@@ -50,19 +50,20 @@
 .corner-dice:active { transform: scale(0.87); }
 
 /* Rolling */
-.corner-dice.rolling { animation: roll 0.42s cubic-bezier(.36,.07,.19,.97) both; }
+.corner-dice.rolling { animation: roll 0.35s cubic-bezier(.15,.5,.3,1) both; }
 .corner-green  .corner-dice.rolling { box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 0 20px 6px #00c853; }
 .corner-red    .corner-dice.rolling { box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 0 20px 6px #ff1744; }
 .corner-yellow .corner-dice.rolling { box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 0 20px 6px #ffd600; }
 .corner-blue   .corner-dice.rolling { box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 0 20px 6px #2979ff; }
 
 @keyframes roll {
-    0%   { transform: rotate(0deg)   scale(1);    }
-    20%  { transform: rotate(72deg)  scale(0.82); }
-    40%  { transform: rotate(144deg) scale(1.18); }
-    60%  { transform: rotate(216deg) scale(0.82); }
-    80%  { transform: rotate(288deg) scale(1.12); }
-    100% { transform: rotate(360deg) scale(1);    }
+    0%   { transform: rotate(0deg)    scale(1);    }
+    10%  { transform: rotate(60deg)   scale(0.75); }
+    25%  { transform: rotate(160deg)  scale(1.25); }
+    50%  { transform: rotate(280deg)  scale(0.8);  }
+    75%  { transform: rotate(380deg)  scale(1.15); }
+    90%  { transform: rotate(440deg)  scale(0.95); }
+    100% { transform: rotate(360deg)  scale(1);    }
 }
 
 /* Base dot - black (used by 2,3,4,5) */
