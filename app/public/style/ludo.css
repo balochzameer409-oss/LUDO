@@ -202,7 +202,7 @@ html, body {
 }
 
 .corner-msg {
-    font-size: 8px;
+    font-size: 5px;
     color: #aabbd0;
     text-align: center;
     font-family: sans-serif;
@@ -229,7 +229,7 @@ html, body {
 }
 
 .corner-msg {
-    font-size: 8px;
+    font-size: 5px;
     color: #88a0b8;
     text-align: center;
     min-height: 10px;
@@ -289,7 +289,7 @@ html, body {
     .avatar-piece { width: 50px; height: 50px; }
     .corner-msg { font-size: 9px; }
     .gameBoard { width: 500px; max-width: 500px; }
-    .msgBoard { width: 100%; max-width: 820px; max-height: 120px; }
+  
 }
 
 /* ── RANKING SYSTEM ── */
