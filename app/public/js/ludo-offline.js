@@ -502,7 +502,7 @@ function updateDiceUI(id, num) {
     var d = document.getElementById('dice-' + id);
     if (d) {
         d.classList.add('rolling');
-        setTimeout(function () { d.setAttribute('data-num', num); d.classList.remove('rolling'); }, 500);
+        setTimeout(function () { d.setAttribute('data-num', num); d.classList.remove('rolling'); }, 350);
     }
     setTimeout(function () {
         var m = document.getElementById('cmsg-' + id);
