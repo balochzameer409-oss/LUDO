@@ -181,7 +181,7 @@ html, body {
     justify-content: center;
     padding: 10px;
     border-radius: 16px;
-    border: 10px solid rgba(255,215,0,0.8);
+    border: 4px ridge rgba(255,215,0,0.8);
     background: linear-gradient(135deg, #0d1b35, #1a2a50);
     box-shadow: 0 0 18px rgba(255,215,0,0.35), 0 4px 16px rgba(0,0,0,0.5);
     width: 75px;
