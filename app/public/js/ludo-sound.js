@@ -1,7 +1,4 @@
 var LudoSound = (function () {
-
-    var _unlocked = false;
-
     var _sounds = {
         dice:     new Audio('../sounds/dice.mp3'),
         move:     new Audio('../sounds/move.mp3'),
@@ -10,65 +7,99 @@ var LudoSound = (function () {
         six:      new Audio('../sounds/six.mp3'),
         gameOver: new Audio('../sounds/game-over.mp3')
     };
-
+    
+    // والیوم سیٹ کریں
     _sounds.dice.volume     = 0.8;
     _sounds.move.volume     = 0.6;
     _sounds.kill.volume     = 1.0;
     _sounds.win.volume      = 1.0;
     _sounds.six.volume      = 0.9;
     _sounds.gameOver.volume = 0.8;
-
+    
+    // تمام ساؤنڈز کو پری لوڈ کریں
+    Object.values(_sounds).forEach(function(sound) {
+        sound.load(); // mp3 فائلز لوڈ ہو جائیں گی
+        sound.preload = 'auto'; // خودکار لوڈنگ
+    });
+    
     function _play(sound) {
         try {
+            // ری سیٹ اور پلے
             sound.currentTime = 0;
-            var p = sound.play();
-            if (p && p.catch) p.catch(function(e) {
-                console.log('Sound error:', e);
-            });
+            
+            var playPromise = sound.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.catch(function(error) {
+                    console.log('Sound play error:', error);
+                    // اگر پلے نہ ہو سکے تو دوبارہ کوشش کریں
+                    setTimeout(function() {
+                        sound.play().catch(function(e) {});
+                    }, 100);
+                });
+            }
         } catch(e) {
             console.log('Sound error:', e);
         }
     }
-
-    // پہلے touch/click پر سب sounds کو 0 volume پر play کرو
-    // تاکہ browser unlock ہو اور بعد میں sounds چلیں
+    
+    // انلاک فنکشن - صارف کے کلک پر ایک بار چلے گا
     function unlock() {
-        if (_unlocked) return;
-        _unlocked = true;
+        // تمام ساؤنڈز کو خاموشی سے پلے کریں
         Object.values(_sounds).forEach(function(s) {
-            var origVol = s.volume;
-            s.volume = 0;
+            var originalVolume = s.volume;
+            s.volume = 0; // خاموش
+            
             var p = s.play();
-            if (p && p.then) {
+            if (p !== undefined) {
                 p.then(function() {
+                    // پلے ہو گیا تو روک دیں
                     s.pause();
                     s.currentTime = 0;
-                    s.volume = origVol;
-                }).catch(function(){
-                    s.volume = origVol;
+                    s.volume = originalVolume; // والیوم واپس
+                }).catch(function() {
+                    s.volume = originalVolume;
                 });
-            } else {
-                s.volume = origVol;
             }
         });
+        
+        // ایک ڈمی ساؤنڈ بھی بجا دیں
+        var silentContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (silentContext.state === 'suspended') {
+            silentContext.resume();
+        }
     }
-
+    
+    // پبلک فنکشنز
     function dice()     { _play(_sounds.dice);     }
     function move()     { _play(_sounds.move);     }
     function kill()     { _play(_sounds.kill);     }
     function win()      { _play(_sounds.win);      }
     function six()      { _play(_sounds.six);      }
     function gameOver() { _play(_sounds.gameOver); }
-
-    return { unlock:unlock, dice:dice, move:move, kill:kill, win:win, six:six, gameOver:gameOver };
+    
+    return {
+        unlock: unlock,
+        dice: dice,
+        move: move,
+        kill: kill,
+        win: win,
+        six: six,
+        gameOver: gameOver
+    };
 })();
 
+// صارف کے کلک پر انلاک
 (function(){
-    function _u() {
+    function unlockHandler() {
         LudoSound.unlock();
-        document.removeEventListener('click', _u);
-        document.removeEventListener('touchstart', _u);
+        // پہلی بار کے بعد event ہٹا دیں
+        document.removeEventListener('click', unlockHandler);
+        document.removeEventListener('touchstart', unlockHandler);
+        document.removeEventListener('keydown', unlockHandler);
     }
-    document.addEventListener('click', _u);
-    document.addEventListener('touchstart', _u);
+    
+    document.addEventListener('click', unlockHandler);
+    document.addEventListener('touchstart', unlockHandler);
+    document.addEventListener('keydown', unlockHandler); // کی بورڈ کے لیے بھی
 })();
