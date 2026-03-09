@@ -624,14 +624,19 @@ function loadAllPieces(){
 }
 
 // BUG FIX 1: chance rotation - use indexOf not chance as index
+// باری order گھڑی کی سوئی: Yellow(3) → Green(0) → Red(1) → Blue(2)
+const TURN_ORDER = [3, 0, 1, 2];
+
 function chanceRotation(id, num){
     if(num == 6){
         return id; // چھکا - دوبارہ اسی کی باری
     } else {
-        let currentIndex = MYROOM.indexOf(Number(id));
-        if(currentIndex === -1) currentIndex = MYROOM.indexOf(id);
-        let nextIndex = (currentIndex + 1) % MYROOM.length;
-        return MYROOM[nextIndex];
+        // TURN_ORDER میں سے صرف active players فلٹر کرو
+        let activeTurns = TURN_ORDER.filter(p => MYROOM.includes(p));
+        let currentIndex = activeTurns.indexOf(Number(id));
+        if(currentIndex === -1) currentIndex = 0;
+        let nextIndex = (currentIndex + 1) % activeTurns.length;
+        return activeTurns[nextIndex];
     }
 }
 
