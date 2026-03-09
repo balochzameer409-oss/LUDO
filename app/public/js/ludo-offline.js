@@ -128,7 +128,7 @@ class Player {
         for (let i = 0; i < 4; i++) this.myPieces[i] = new Piece(String(i), String(id));
         this.won = 0;
     }
-    draw() { for (let i = 0; i < 4; i++) this.myPieces[i].draw(); }
+    draw() { for (let i = 0; i < 4; i++) this.myPieces[i].draw(false); }
     didIwin() { return this.won === 4 ? 1 : 0; }
 }
 
@@ -222,7 +222,20 @@ class Piece {
         }
     }
 
-    draw() { ctx.drawImage(this.image, this.x, this.y, 50, 50); }
+    draw(highlight) {
+        if (highlight) {
+            // چمکدار glow لگاؤ
+            ctx.save();
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur  = 18;
+            ctx.beginPath();
+            ctx.arc(this.x + 25, this.y + 25, 26, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,215,0,0.35)';
+            ctx.fill();
+            ctx.restore();
+        }
+        ctx.drawImage(this.image, this.x, this.y, 50, 50);
+    }
 
     update(num) {
         // اگر گوٹی ابھی home میں ہے (pos === -1) اور چھکا ہے
@@ -305,7 +318,7 @@ class Piece {
 function startOffline(numPlayers) {
     totalPlayers = numPlayers;
     // order: Yellow(3), Red(1), Blue(2), Green(0)
-    const orderAll = [3, 1, 2, 0];
+    const orderAll = [3, 0, 1, 2]; // گھڑی کی سوئی: Yellow → Green → Red → Blue
     MYROOM = orderAll.slice(0, numPlayers);
     document.getElementById('player-select-modal').style.display = 'none';
     loadAllPieces();
@@ -495,7 +508,16 @@ function inAhomeTile(id, pid) {
 
 function allPlayerHandler() {
     ctx.clearRect(0, 0, 750, 750);
-    for (var i = 0; i < MYROOM.length; i++) PLAYERS[MYROOM[i]].draw();
+    for (var i = 0; i < MYROOM.length; i++) {
+        var player = PLAYERS[MYROOM[i]];
+        for (var j = 0; j < 4; j++) {
+            // چل سکنے والی گوٹی highlight کرو
+            var isMovable = _waiting && _spirit && 
+                            MYROOM[i] === chance && 
+                            _spirit.includes(j);
+            player.myPieces[j].draw(isMovable);
+        }
+    }
 }
 
 function updateDiceUI(id, num) {
