@@ -523,9 +523,11 @@ function allPlayerHandler() {
 function updateDiceUI(id, num) {
     var d = document.getElementById('dice-' + id);
     if (d) {
-        d.setAttribute('data-num', '0'); // گھومتے وقت خالی
+        d.classList.remove('rolling');
+        void d.offsetWidth; // reflow — animation reset
+        d.setAttribute('data-num', num);
         d.classList.add('rolling');
-        setTimeout(function () { d.setAttribute('data-num', num); d.classList.remove('rolling'); }, 350);
+        setTimeout(function () { d.classList.remove('rolling'); }, 400);
     }
     setTimeout(function () {
         var m = document.getElementById('cmsg-' + id);
