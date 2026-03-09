@@ -1,3 +1,4 @@
+
 /**
  * dice-sync.js
  * Bridges the original ludo.js with the new corner dice UI.
@@ -42,11 +43,12 @@
     function updateCornerDice(playerId, num) {
         const dice = document.getElementById('dice-' + playerId);
         if (!dice) return;
+        dice.setAttribute('data-num', '0'); // گھومتے وقت نمبر چھپاؤ
         dice.classList.add('rolling');
         setTimeout(() => {
             dice.setAttribute('data-num', num);
             dice.classList.remove('rolling');
-        }, 500);
+        }, 350);
     }
 
     // -------------------------------------------------------
@@ -122,15 +124,7 @@
             };
         }
 
-        // Patch updateDice to sync corner faces
-        const origUpdateDice = window.updateDice;
-        if (typeof origUpdateDice === 'function') {
-            window.updateDice = function (num) {
-                origUpdateDice(num);
-                const myPlayerId = window.myid !== undefined ? Number(window.myid) : -1;
-                if (myPlayerId >= 0) updateCornerDice(myPlayerId, num);
-            };
-        }
+        // updateDice already handles corner dice in main.js - no double update needed
     });
 
     // -------------------------------------------------------
