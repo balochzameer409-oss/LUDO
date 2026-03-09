@@ -69,18 +69,7 @@
         observer.observe(hiddenButt, { attributes: true, attributeFilter: ['class'] });
     }
 
-    // -------------------------------------------------------
-    // WATCH data-num attribute on hidden dice (updateDice called by ludo.js)
-    // -------------------------------------------------------
-    if (hiddenButt) {
-        const numObserver = new MutationObserver(() => {
-            const myPlayerId = window.myid !== undefined ? Number(window.myid) : -1;
-            if (myPlayerId < 0) return;
-            const num = hiddenButt.getAttribute('data-num');
-            if (num) updateCornerDice(myPlayerId, num);
-        });
-        numObserver.observe(hiddenButt, { attributes: true, attributeFilter: ['data-num'] });
-    }
+    // numObserver ہٹا دیا — rolled-dice socket سے directly update ہوگا
 
     // -------------------------------------------------------
     // Wire each corner dice click -> trigger hidden randomButt click
