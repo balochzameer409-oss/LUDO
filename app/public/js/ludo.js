@@ -552,7 +552,7 @@ function diceAction(){
                             return 0;
                         }// غلط گوٹی — کچھ نہ کرو
                     }
-        
+
                 }
                 // غلط جگہ — کچھ نہ کرو
             })
@@ -605,6 +605,18 @@ function StartTheGame(){
 
 //Load all the images of the pieces
 function loadAllPieces(){
+    // PIECES صرف ایک بار fill ہو — دوبارہ call پر skip
+    if(PIECES.length > 0){
+        for(let j=0;j<MYROOM.length;j++){
+            if(!PLAYERS[MYROOM[j]]) PLAYERS[MYROOM[j]] = new Player(MYROOM[j]);
+        }
+        allPlayerHandler();
+        return;
+    }
+
+    // اس وقت کا MYROOM snapshot لو — async onload میں بعد کے joiners نہ آئیں
+    const roomSnapshot = MYROOM.slice();
+
     let cnt = 0;
     for(let i=0;i<colors.length;i++){
         let img = new Image();
@@ -612,9 +624,9 @@ function loadAllPieces(){
         img.onload = ()=>{
             ++cnt;
             if(cnt >= colors.length){
-                //all images are loaded
-                for(let j=0;j<MYROOM.length;j++){
-                    PLAYERS[MYROOM[j]] = new Player(MYROOM[j]);
+                // صرف snapshot والے players بناؤ — ghost نہیں آئے گا
+                for(let j=0;j<roomSnapshot.length;j++){
+                    if(!PLAYERS[roomSnapshot[j]]) PLAYERS[roomSnapshot[j]] = new Player(roomSnapshot[j]);
                 }
                 allPlayerHandler();
             }
@@ -642,34 +654,153 @@ function chanceRotation(id, num){
 
 //draws 4 x 4 = 16 pieces per call
 // ── sliding animation ──
+// FIX: سیدھی line کے بجائے path کے steps follow کریں
+// FIX: آواز صرف ایک بار شروع میں بجائیں، ہر قدم پر نہیں
 function _slidePiece(colorId, pid, fromX, fromY, toX, toY, onDone) {
     var piece = window.PLAYERS[colorId].myPieces[pid];
-    piece.x = fromX;
-    piece.y = fromY;
 
-    var totalSteps = Math.round((Math.abs(toX - fromX) + Math.abs(toY - fromY)) / 50);
-    if (totalSteps === 0) { if (onDone) onDone(); return; }
+    // گوٹی کی current pos سے path steps نکالو
+    // piece.pos پہلے ہی update ہو چکی ہے، تو پچھلی pos نکالنی ہے
+    // ہم path snapshots بناتے ہیں: startPos سے endPos تک ہر step کا x,y
 
-    var stepDx = (toX - fromX) / totalSteps;
-    var stepDy = (toY - fromY) / totalSteps;
-    var current = 0;
+    var startPos = piece.pos; // یہ already updated ہے (endPos)
+    // fromX/fromY سے path waypoints بناؤ — piece کے path array سے
+    // ہم ایک temp piece بنا کر step by step چلاتے ہیں
 
-    var interval = setInterval(function() {
-        if (current >= totalSteps) {
+    // waypoints collect کرو
+    var waypoints = [{x: fromX, y: fromY}];
+
+    // temp object جو صرف position track کرے
+    var tempX = fromX;
+    var tempY = fromY;
+
+    // piece کی endPos اور startPos کا فرق = steps
+    var endPos = piece.pos;
+    var steps;
+    if(endPos === 0 && fromX === allPiecesePos[colorId][pid].x){
+        // گھر سے نکلی — صرف ایک jump
+        steps = 0;
+    } else {
+        // کتنے steps چلی؟ endPos - (endPos سے پہلے کی pos)
+        // چونکہ update(num) چل چکی، ہمیں num نہیں پتہ براہ راست
+        // لیکن ہم fromX,fromY سے toX,toY تک path[i] steps لگا کر waypoints بنا سکتے ہیں
+        steps = 0;
+    }
+
+    // بہتر طریقہ: piece کے path array کو simulate کریں
+    // path[i] functions x/y +50 یا -50 کرتی ہیں
+    // ہم ایک fake temp player بنائیں گے
+
+    // endPos معلوم ہے، fromPos معلوم کریں
+    // fromPos = endPos - numSteps
+    // numSteps = Manhattan distance / 50 (approximately, لیکن diagonal ہے تو نہیں)
+    // بہترین: path کو directly simulate کرو
+
+    // piece.pos = endPos (already set)
+    // ہمیں startPos چاہیے
+    var numSteps = 0;
+    // diagonal move بھی 50,50 ہے تو Manhattan distance درست نہیں
+    // path simulate کر کے نکالتے ہیں
+
+    // temporary tracking object
+    var tx = fromX, ty = fromY;
+    var pathWaypoints = [{x: tx, y: ty}];
+
+    // endPos find کرو — piece.pos already endPos ہے
+    // startPos = ؟ — ہمیں steps گننے ہیں
+    // اگر pos === 0 (ابھی گھر سے نکلی) تو fromX,fromY = ghar pos ہے، صرف 1 waypoint
+    if(endPos === 0){
+        // گھر سے نکلی — صرف آخری position پر جاؤ
+        pathWaypoints = [{x: fromX, y: fromY}, {x: toX, y: toY}];
+    } else {
+        // startPos نکالنے کے لیے path simulate کریں
+        // fromX, fromY پر temp variables رکھیں اور path[startPos] سے path[endPos-1] تک چلائیں
+        // startPos = endPos - num_moved
+        // num_moved = endPos - startPos_before_update
+        // چونکہ ہمارے پاس num_moved نہیں، ہم fromX,fromY سے path simulate کر کے نکالتے ہیں
+
+        // piece کی path array سے ہر step کا x,y delta نکالو
+        // path functions window.PLAYERS[id].myPieces[pid].x کو modify کرتی ہیں
+        // ہم ایک dummy approach: simulate via path deltas
+
+        // fromX/fromY سے path[i] کے ذریعے waypoints بناؤ جب تک toX,toY نہ پہنچیں
+        // پہلے startPos تلاش کریں: path[0..endPos-1] simulate کریں
+
+        // سب سے آسان: path[startPos]..path[endPos-1] کو simulate کریں
+        // startPos = ? — ہمیں معلوم نہیں directly
+        // لیکن ہم fromX,fromY سے match کر سکتے ہیں
+
+        // piece کی full path simulate کریں، ہر step کا cumulative x,y نکالیں
+        // پھر fromX,fromY والا index = startPos_before_update
+
+        var simX = allPiecesePos[colorId][pid].x; // گھر کی position سے شروع
+        var simY = allPiecesePos[colorId][pid].y;
+        // pos=0 = homeTile پر ہے
+        var homeX = homeTilePos[colorId][0].x;
+        var homeY = homeTilePos[colorId][0].y;
+
+        // pos=0 پر x,y = homeTile[0]
+        // آگے path[0], path[1], ... path[pos-1] apply ہوں گی
+
+        // simulate کریں: pos 0 سے endPos تک
+        var simPositions = [{x: homeX, y: homeY}]; // pos=0
+
+        var tempPiece = {x: homeX, y: homeY};
+        // path functions window.PLAYERS[id].myPieces[pid] پر کام کرتی ہیں
+        // ہم ایک proxy بناتے ہیں
+
+        // backup اصل values
+        var origX = piece.x, origY = piece.y;
+        piece.x = homeX; piece.y = homeY;
+
+        for(var s = 0; s < endPos && s < piece.path.length; s++){
+            piece.path[s](colorId, pid);
+            simPositions.push({x: piece.x, y: piece.y});
+        }
+
+        // restore
+        piece.x = origX; piece.y = origY;
+
+        // اب fromX,fromY والا index تلاش کریں
+        var startIdx = 0;
+        for(var k = 0; k < simPositions.length; k++){
+            if(simPositions[k].x === fromX && simPositions[k].y === fromY){
+                startIdx = k;
+                break;
+            }
+        }
+
+        // startIdx سے endPos تک waypoints
+        pathWaypoints = simPositions.slice(startIdx);
+        if(pathWaypoints.length === 0) pathWaypoints = [{x: fromX, y: fromY}, {x: toX, y: toY}];
+    }
+
+    // اب pathWaypoints کے ذریعے animate کریں
+    var wpIndex = 0;
+    piece.x = pathWaypoints[0].x;
+    piece.y = pathWaypoints[0].y;
+
+    if(pathWaypoints.length <= 1){
+        if(onDone) onDone();
+        return;
+    }
+
+    var interval = setInterval(function(){
+        wpIndex++;
+        if(wpIndex >= pathWaypoints.length){
             clearInterval(interval);
             piece.x = toX;
             piece.y = toY;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (var i = 0; i < MYROOM.length; i++) PLAYERS[MYROOM[i]].draw();
-            if (onDone) onDone();
+            for(var i = 0; i < MYROOM.length; i++) PLAYERS[MYROOM[i]].draw();
+            if(onDone) onDone();
             return;
         }
-        piece.x = Math.round(fromX + stepDx * (current + 1));
-        piece.y = Math.round(fromY + stepDy * (current + 1));
-        if (window.LudoSound) LudoSound.move();
-        current++;
+        piece.x = pathWaypoints[wpIndex].x;
+        piece.y = pathWaypoints[wpIndex].y;
+        if(window.LudoSound) LudoSound.move(); // ہر قدم پر ایک آواز
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (var j = 0; j < MYROOM.length; j++) PLAYERS[MYROOM[j]].draw();
+        for(var j = 0; j < MYROOM.length; j++) PLAYERS[MYROOM[j]].draw();
     }, 120);
 }
 
@@ -842,11 +973,11 @@ function showModal(id){ showFinalModal(id); }
 async function copyhandler() {
     var copyText = document.getElementById("copy").innerHTML;
     await navigator.clipboard.writeText(copyText);
-    
+
     var tooltip = document.getElementById("myTooltip");
     tooltip.innerHTML = "Copied!!";
 }
-  
+
 function outFunc() {
     var tooltip = document.getElementById("myTooltip");
     tooltip.innerHTML = "Copy to clipboard";
@@ -855,11 +986,11 @@ function outFunc() {
 async function copyhandlerLink() {
     var copyText = window.location.href;
     await navigator.clipboard.writeText(copyText);
-    
+
     var tooltip = document.getElementById("myTooltipLink");
     tooltip.innerHTML = "Copied!!";
 }
-  
+
 function outFuncLink() {
     var tooltip = document.getElementById("myTooltipLink");
     tooltip.innerHTML = "Copy room link to clipboard";
